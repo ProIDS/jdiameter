@@ -62,6 +62,7 @@ import org.jdiameter.common.api.app.IAppSessionState;
 import org.jdiameter.common.api.app.ro.ClientRoSessionState;
 import org.jdiameter.common.api.app.ro.IClientRoSessionContext;
 import org.jdiameter.common.api.app.ro.IRoMessageFactory;
+import org.jdiameter.common.api.data.ISessionDatasource;
 import org.jdiameter.common.impl.app.AppAnswerEventImpl;
 import org.jdiameter.common.impl.app.AppRequestEventImpl;
 import org.jdiameter.common.impl.app.auth.ReAuthAnswerImpl;
@@ -104,11 +105,13 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   private static final int DDFH_TERMINATE_OR_BUFFER = 0;
   private static final int DDFH_CONTINUE = 1;
 
-  // CC-Request-Type Values ---------------------------------------------------
+  // Requested-Action Values --------------------------------------------------
   private static final int DIRECT_DEBITING = 0;
   private static final int REFUND_ACCOUNT = 1;
   private static final int CHECK_BALANCE = 2;
   private static final int PRICE_ENQUIRY = 3;
+  
+  // CC-Request-Type  ---------------------------------------------------------
   private static final int EVENT_REQUEST = 4;
 
   // Error Codes --------------------------------------------------------------
@@ -133,8 +136,8 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   // Session Based Queue
   protected ArrayList<Event> eventQueue = new ArrayList<Event>();
 
-  public ClientRoSessionImpl(IClientRoSessionData sessionData, IRoMessageFactory fct, ISessionFactory sf, ClientRoSessionListener lst,IClientRoSessionContext ctx, StateChangeListener<AppSession> stLst) {
-    super(sf,sessionData);
+  public ClientRoSessionImpl(IClientRoSessionData sessionData, IRoMessageFactory fct, ISessionDatasource sds, ISessionFactory sf, ClientRoSessionListener lst,IClientRoSessionContext ctx, StateChangeListener<AppSession> stLst) {
+    super(sds, sf, sessionData);
     if (lst == null) {
       throw new IllegalArgumentException("Listener can not be null");
     }
@@ -337,6 +340,12 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
             // New State: OPEN
             stopTx();
             setState(ClientRoSessionState.OPEN);
+            //Session persistence record shall be created after a peer had answered the 
+            //first (initial) request for that session
+            if(isSessionPersistenceEnabled()) {
+              initSessionPersistenceContext(localEvent.getRequest(), localEvent.getAnswer());
+              startSessionInactivityTimer();
+            }
           }
           else if (isProvisional(resultCode) || isFailure(resultCode)) {
             handleFailureMessage((RoCreditControlAnswer) answer, (RoCreditControlRequest) localEvent.getRequest(), eventType);
@@ -388,6 +397,8 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           // Action: Send RAA followed by CC update request, start Tx
           // New State: PENDING_U
           startTx((RoCreditControlRequest) localEvent.getRequest());
+          if(isSessionPersistenceEnabled())
+            startSessionInactivityTimer();
           setState(ClientRoSessionState.PENDING_UPDATE);
           try {
             dispatchEvent(localEvent.getRequest());
@@ -412,6 +423,8 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           // Event: User service terminated
           // Action: Send CC termination request
           // New State: PENDING_T
+          if(isSessionPersistenceEnabled())
+            stopSessionInactivityTimer();
           setState(ClientRoSessionState.PENDING_TERMINATION);
           try {
             dispatchEvent(localEvent.getRequest());
@@ -612,6 +625,15 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   public void onTimer(String timerName) {
     if(timerName.equals(TX_TIMER_NAME)) {
       new TxTimerTask(this, sessionData.getTxTimerRequest()).run();
+    } else {
+      try {
+        sendAndStateLock.lock();
+        super.onTimer(timerName);
+      } catch (Exception ex) {
+        logger.error("Cannot properly handle timer expiry", ex);
+      } finally {
+        sendAndStateLock.unlock();
+      }
     }
   }
 
@@ -634,6 +656,14 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           this.release();
         }
         stopTx();
+        
+        if(isSessionPersistenceEnabled()) {
+          stopSessionInactivityTimer();
+          if(!release) {
+            String oldPeer = flushSessionPersistenceContext();
+            logger.debug("Session state reset, routing context for peer [{}] was removed from session [{}]", oldPeer, this.getSessionId());
+          }
+        }
       }
     }
     catch (Exception e) {
@@ -1088,6 +1118,8 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           // Action: Grant service to end user
           // New State: PENDING_U
           context.grantAccessOnTxExpire(this);
+          if(isSessionPersistenceEnabled())
+            stopSessionInactivityTimer();
           break;
 
         case CCFH_TERMINATE:
@@ -1237,7 +1269,6 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   public boolean isReplicable() {
     return true;
   }
-
 
   private class TxTimerTask implements Runnable {
     private ClientRoSession session = null;

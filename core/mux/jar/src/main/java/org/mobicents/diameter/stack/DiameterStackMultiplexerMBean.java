@@ -186,6 +186,16 @@ public interface DiameterStackMultiplexerMBean extends ServiceMBean {
    * @throws MBeanException if the operation is unable to perform correctly
    */
   public void _Parameters_setRecTimeout(long recTimeout) throws MBeanException;
+  
+  /**
+   * Sets the timeout value for session inactivity timer which defines how much time 
+   * the persistence record should be kept if there is no request sent within a session.
+   * Irrelevant when session persistent routing is not enabled, defaults to 1800 seconds.
+   * 
+   * @param timeout the amount of time, in seconds.
+   * @throws MBeanException if the operation is unable to perform correctly
+   */
+  public void _Parameters_setSessionInactivityTimeout(int timeout) throws MBeanException;
 
   public void _Parameters_setConcurrentEntity(String name, String desc, Integer size) throws MBeanException;
 
@@ -316,4 +326,14 @@ public interface DiameterStackMultiplexerMBean extends ServiceMBean {
 
   public boolean _Network_Peers_isPeerConnected(String name) throws MBeanException;
 
+  // Sessions : routing persistence map ------------------------------------
+  
+  /**
+   * Gets the current state of session persistence map used for routing and lists 
+   * all sticky sessions that are currently in operation. 
+   * 
+   * @param maxLimit maximum number of records to be listed (0 corresponds to no limit)
+   * @throws MBeanException if the operation is unable to perform correctly
+   */
+  public String _Network_Sessions_getPersistenceMap(int maxLimit) throws MBeanException;
 }

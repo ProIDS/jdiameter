@@ -593,7 +593,7 @@ public class PeerImpl extends AbstractPeer implements IPeer {
   }
 
   public String toString() {
-    return "CPeer{" + "Uri=" + uri + "; State=" + (fsm != null ? fsm.getState(PeerState.class) : "n/a") + "; Con="+ connection + "}";
+    return "CPeer{" + "Uri=" + uri + "; State=" + (fsm != null ? fsm.getState(PeerState.class) : "n/a") + "; Rating=" + rating + "; Con=" + connection + "}";
   }
 
   protected void fillIPAddressTable(IMessage message) {

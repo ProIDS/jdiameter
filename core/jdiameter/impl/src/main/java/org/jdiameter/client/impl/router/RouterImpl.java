@@ -123,7 +123,7 @@ public class RouterImpl implements IRouter {
   //protected List<Long> requestSortedEntryTable = new ArrayList<Long>();
   protected boolean isStopped = true;
 
-  public RouterImpl(IContainer container,IConcurrentFactory concurrentFactory, IRealmTable realmTable,Configuration config, MetaData aMetaData) {
+  public RouterImpl(IContainer container,IConcurrentFactory concurrentFactory, IRealmTable realmTable, Configuration config, MetaData aMetaData) {
     this.concurrentFactory = concurrentFactory;
     this.metaData = aMetaData;
     this.realmTable = realmTable;
@@ -409,38 +409,15 @@ public class RouterImpl implements IRouter {
       if (peers == null || peers.length == 0) {
         throw new RouteException("Unable to find context by route information [" + destRealm + " ," + destHost + "]");
       }
-
-      // Collect peers
-      ArrayList<IPeer> availablePeers = new ArrayList<IPeer>(5);
-      logger.debug("Looping through peers in realm [{}]", destRealm);
-      for (String peerName : peers) {
-        IPeer localPeer = (IPeer) manager.getPeer(peerName);
-        if(logger.isDebugEnabled()) {
-          logger.debug("Checking peer [{}] for name [{}]", new Object[]{localPeer,peerName});
-        }
-        // ammendonca: added peer state check.. should not be needed but 
-        // hasValidConnection is returning true for disconnected peers in *FTFlowTests
-        if (localPeer != null && localPeer.getState(PeerState.class) == PeerState.OKAY) {
-          if(localPeer.hasValidConnection()) {
-            if(logger.isDebugEnabled()) {
-              logger.debug("Found available peer to add to available peer list with uri [{}] with a valid connection", localPeer.getUri().toString());
-            }
-            availablePeers.add(localPeer);
-          }
-          else {
-            if(logger.isDebugEnabled()) {
-              logger.debug("Found a peer with uri [{}] with no valid connection", localPeer.getUri());
-            }
-          }
-        }
-      }
-
+      
+      List<IPeer> availablePeers = getAvailablePeers(destRealm, peers, manager);
+      
       if(logger.isDebugEnabled()) {
         logger.debug("Performing Realm routing. Realm [{}] has the following peers available [{}] from list [{}]", new Object[] {destRealm, availablePeers, Arrays.asList(peers)});
       }
 
       // Balancing
-      IPeer peer = selectPeer(availablePeers);
+      IPeer peer = selectPeer(availablePeers, message);
       if (peer == null) {
         throw new RouteException("Unable to find valid connection to peer[" + destHost + "] in realm[" + destRealm + "]");
       }
@@ -452,6 +429,43 @@ public class RouterImpl implements IRouter {
 
       return peer;
     }
+  }
+  
+  protected List<IPeer> getAvailablePeers(String destRealm, String[] peers, IPeerTable manager) {
+    return getPeers(destRealm, peers, manager, PeerState.OKAY);
+  }
+  
+  private List<IPeer> getPeers(String destRealm, String[] peers, IPeerTable manager, PeerState state) {
+    List<IPeer> availablePeers = new ArrayList<IPeer>(5);
+    logger.debug("Looping through peers in realm [{}]", destRealm);
+    for (String peerName : peers) {
+      IPeer localPeer = (IPeer) manager.getPeer(peerName);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Checking peer [{}] for name [{}]", new Object[] {localPeer, peerName});
+      }
+      
+      if (localPeer != null && localPeer.getState(PeerState.class) == state) {
+        if (localPeer.hasValidConnection()) {
+          if (logger.isDebugEnabled()) {
+            logger.debug(
+                    "Found available peer to add to available peer list with uri [{}] with a valid connection",
+                    localPeer.getUri().toString());
+          }
+          availablePeers.add(localPeer);
+        } else {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Found a peer with uri [{}] with no valid connection", localPeer.getUri());
+          }
+        }
+      }
+    }
+    
+    return availablePeers;
+  }
+  
+  @Override
+  public boolean isSessionAware() {
+    return false;
   }
 
   public IRealmTable getRealmTable() {
@@ -713,6 +727,10 @@ public class RouterImpl implements IRouter {
     redirectTable = null;
     requestEntryMap = null;
   }
+  
+  protected IPeer selectPeer(List<IPeer> availablePeers, IMessage message) {
+    return selectPeer(availablePeers);
+  }
 
   protected IPeer selectPeer(List<IPeer> availablePeers) {
     IPeer p = null;
@@ -912,5 +930,18 @@ public class RouterImpl implements IRouter {
     public String toString() {
       return "AnswerEntry{" + "createTime=" + createTime + ", hopByHopId=" + hopByHopId + '}';
     }
+  }
+
+  @Override
+  public boolean isWrapperFor(Class<?> aClass) {
+    return aClass == IRouter.class;
+  }
+
+  @Override
+  public <T> T unwrap(Class<T> aClass) {
+    if (aClass == IRouter.class)
+      return aClass.cast(this);
+    else
+      return null;
   }
 }

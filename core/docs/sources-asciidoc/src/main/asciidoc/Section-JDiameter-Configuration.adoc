@@ -112,8 +112,8 @@ The Account Application ID for application definition. It supports a single prop
 
 	<AcceptUndefinedPeer value="true"/>
 	<DuplicateProtection value="true"/>
-  <DuplicateTimer value="240000"/>
-  <DuplicateSize value="5000"/>
+    <DuplicateTimer value="240000"/>
+    <DuplicateSize value="5000"/>
 	<UseUriAsFqdn value="true"/> <!-- Needed for Ericsson SDK Emulator -->
 	<QueueSize value="10000"/>
 	<MessageTimeOut value="60000"/>
@@ -123,6 +123,7 @@ The Account Application ID for application definition. It supports a single prop
 	<DwaTimeOut value="10000"/>
 	<DpaTimeOut value="5000"/>
 	<RecTimeOut value="10000"/>
+	<SessionInactivityTimeOut value="600"/>
 
 	<!-- Peer FSM Thread Count Configuration -->
 	<PeerFSMThreadCount value="3" />
@@ -196,6 +197,10 @@ If not specified otherwise, each tag supports a single property - "value", which
 <RecTimeOut>::
   Determines how long it takes for the reconnection procedure to timeout.
   The delay is in milliseconds.
+
+<SessionInactivityTimeOut>::
+  Determines how much time the persistence record should be kept if there is no request sent within a session.
+  Irrelevant when session persistent routing is not enabled. The delay is in seconds.
 
 <PeerFSMThreadCount>::
   Determines the number of threads for handling events in the Peer FSM.
@@ -336,6 +341,7 @@ Below is an example configuration file for a server supporting the CCA, Sh and R
 		<DwaTimeOut value="10000" />
 		<DpaTimeOut value="5000" />
 		<RecTimeOut value="10000" />
+		<SessionInactivityTimeOut value="600"/>
 
 		<PeerFSMThreadCount value="3" />
 
@@ -495,3 +501,55 @@ The following content is sufficient for the JBoss Cache configuration file:
 
 </jbosscache>
 ----
+
+[[_jdiameter_failover_configuration]]
+== Failover configuration
+
+Apart from a default routing scheme, which does not require any additional configuration,
+there is an option of activating failure aware routing that extends capabilities of basic
+router with extra features related to failure detection, peer priority handling and load
+balancing. Rating of a particular peer is taken into consideration when deciding about
+an order of peers usage in case of failure detection. The highest rating peers are used first,
+then lower priorities peers next, etc. If several peers are marked with the same rating,
+load balancing algorithm is executed among them. In case of all higher priority peers failure,
+lower priority peers are considered. Afterwards, in case any higher priority peer becomes
+available again and session persistence is enabled as well, only new sessions requests are 
+targeted again to higher priority peers, i.e. currently handled session stays assigned to 
+the peer selected beforehand.
+
+In order to enable a/m extended routing feature, the following entry has to be added to the `Extensions`
+section of [path]_jdiameter-config.xml_:
+
+[source,xml]
+----
+<RouterEngine>org.jdiameter.server.impl.FailureAwareRouter</RouterEngine>
+----
+
+Additionally, along with an extended routing policy, it is also highly advised to enable session
+persistence as well. Otherwise, routing decisions will be made for every single request within
+a particular session what may eventually result in multiple undesirable destination peer reselections.
+
+[[_jdiameter_session_persistence_configuration]]
+== Session persistence
+
+Session persistence enforces sticky sessions that map a single diameter session to a single peer
+which had been selected to process such a session. Session persistence record is created after
+a peer had answered the first (initial) request for that session. Furthermore, it can be updated
+in the event of peer reselection by failover algorithm. Finally, it is removed when session is finished
+normally, an error indication answer is received or session inactivity timeout expires. Replication of
+session persistence records is not supported.
+
+The following list defines the requirements for enabling session persistence:
+
+* Add the following entry to the `Parameters` section of [path]_jdiameter-config.xml_: 
++
+[source,xml]
+----
+<SessionDatasource>org.jdiameter.common.impl.data.RoutingAwareDataSource</SessionDatasource>
+----
+
+* Customize the value of `SessionInactivityTimeOut` in the `Extensions` section of [path]_jdiameter-config.xml_
+
+If enabled, session persistence feature supports two types of applications, i.e. CCA (defined in 
+http://tools.ietf.org/html/rfc4006[RFC 4006]) and Ro (defined in http://www.3gpp.org/DynaReport/32240.htm[3GPP TS 32.240]
+and http://www.3gpp.org/DynaReport/32299.htm[3GPP TS 32.299]) by virtue of their session based specificity.

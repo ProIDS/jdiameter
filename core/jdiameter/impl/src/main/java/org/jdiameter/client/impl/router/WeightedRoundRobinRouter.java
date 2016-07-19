@@ -155,7 +155,7 @@ public class WeightedRoundRobinRouter extends RouterImpl {
     }
 
     /**
-     * Return greatest common divisor for two integers
+     * Returns greatest common divisor for two integers
      * https://en.wikipedia.org/wiki/Greatest_common_divisor#Using_Euclid.27s_algorithm
      *
      * @param a
@@ -164,5 +164,24 @@ public class WeightedRoundRobinRouter extends RouterImpl {
      */
     protected int gcd(int a, int b) {
         return (b == 0) ? a : gcd(b, a % b);
+    }
+    
+    /**
+     * Resets all round-robin counters/variables in order to make the whole algorithm
+     * start from scratch.
+     */
+    protected synchronized void resetRoundRobinContext() {
+      lastSelectedPeer = -1;
+      currentWeight = 0;
+    }
+    
+    /**
+     * Gets a readable format of the current round-robin context, i.e. last selected
+     * peer and current weight.
+     * 
+     * @return readable summary of round-robin context
+     */
+    protected String dumpRoundRobinContext() {
+      return String.format("Current round-robin context is: lastSelectedPeer=[%d] currentWeight=[%d]", lastSelectedPeer, currentWeight);
     }
 }

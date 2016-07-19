@@ -255,7 +255,7 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
 
         IClientRoSessionData sessionData = (IClientRoSessionData) this.sessionDataFactory.getAppSessionData(ClientRoSession.class, sessionId);
         sessionData.setApplicationId(applicationId);
-        clientSession = new ClientRoSessionImpl(sessionData, this.getMessageFactory(), sessionFactory, this.getClientSessionListener(), this.getClientContextListener(), this.getStateListener()); 
+        clientSession = new ClientRoSessionImpl(sessionData, this.getMessageFactory(), iss, sessionFactory, this.getClientSessionListener(), this.getClientContextListener(), this.getStateListener()); 
         // this goes first!
         iss.addSession(clientSession);
         clientSession.getSessions().get(0).setRequestListener(clientSession);
@@ -303,7 +303,7 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
     try {
       if (aClass == ClientRoSession.class) {
         IClientRoSessionData sessionData = (IClientRoSessionData) this.sessionDataFactory.getAppSessionData(ClientRoSession.class, sessionId);
-        ClientRoSessionImpl clientSession = new ClientRoSessionImpl(sessionData, this.getMessageFactory(), sessionFactory, this.getClientSessionListener(), this.getClientContextListener(), this.getStateListener()); 
+        ClientRoSessionImpl clientSession = new ClientRoSessionImpl(sessionData, this.getMessageFactory(), iss, sessionFactory, this.getClientSessionListener(), this.getClientContextListener(), this.getStateListener()); 
         // this goes first!
         clientSession.getSessions().get(0).setRequestListener(clientSession);
         appSession = clientSession;
