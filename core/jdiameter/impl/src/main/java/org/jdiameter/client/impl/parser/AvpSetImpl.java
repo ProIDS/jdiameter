@@ -48,6 +48,7 @@ import org.jdiameter.client.api.parser.ParseException;
  * @author erick.svenson@yahoo.com
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
+ * @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel [ProIDS] </a>
  */
 class AvpSetImpl implements AvpSet {
 
@@ -105,6 +106,24 @@ class AvpSetImpl implements AvpSet {
             }
         }
         return result;
+    }
+
+    public int getAvpIndex(int avpCode) {
+        for (Avp avp : this.avps) {
+            if (avp.getCode() == avpCode ) {
+                return this.avps.indexOf(avp);
+            }
+        }
+        return -1;
+    }
+
+    public int getAvpIndex(int avpCode, long vendorId) {
+        for (Avp avp : this.avps) {
+            if (avp.getCode() == avpCode && avp.getVendorId() == vendorId) {
+                return this.avps.indexOf(avp);
+            }
+        }
+        return -1;
     }
 
     public AvpSet removeAvp(int avpCode) {
