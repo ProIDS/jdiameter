@@ -60,10 +60,7 @@
     <Peers>
       <!-- Testsuite UACs -->
       <Peer name="aaa://uac1-prio1.restcomm.org:21100" attempt_connect="false" rating="1" />
-      <Peer name="aaa://uac2-prio1.restcomm.org:21200" attempt_connect="false" rating="1" />
-      <Peer name="aaa://uac3-prio1.restcomm.org:21300" attempt_connect="false" rating="1" />
-      <Peer name="aaa://uac4-prio2.restcomm.org:22100" attempt_connect="false" rating="2" />
-      <Peer name="aaa://uac5-prio2.restcomm.org:22200" attempt_connect="false" rating="2" />
+      <Peer name="aaa://uac2-prio2.restcomm.org:22100" attempt_connect="false" rating="2" />
       
       <!-- Testsuite UASs -->
       <Peer name="aaa://uas1-prio1.restcomm.org:31100" attempt_connect="true" rating="1" />
@@ -84,7 +81,7 @@
       </Realm>
       
       <!--  Ro -->
-      <Realm name="restcomm.org" peers="uas1-prio1.restcomm.org,uas2-prio1.restcomm.org,uas3-prio1.restcomm.org,uas4-prio2.restcomm.org,uas5-prio2.restcomm.org,uac1-prio1.restcomm.org,uac2-prio1.restcomm.org,uac3-prio1.restcomm.org,uac4-prio2.restcomm.org,uac5-prio2.restcomm.org" local_action="LOCAL" dynamic="false" exp_time="1">
+      <Realm name="restcomm.org" peers="uas1-prio1.restcomm.org,uas2-prio1.restcomm.org,uas3-prio1.restcomm.org,uas4-prio2.restcomm.org,uas5-prio2.restcomm.org,uac1-prio1.restcomm.org,uac2-prio2.restcomm.org" local_action="LOCAL" dynamic="false" exp_time="1">
         <ApplicationID>
           <VendorId value="10415" />
           <AuthApplId value="4" />

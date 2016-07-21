@@ -383,7 +383,7 @@ public class Parameters extends Ordinal {
    * the persistence record should be kept if there is no request sent within a session.
    * Irrelevant when session persistent routing is not enabled.
    */
-  public static final Parameters SessionInactivityTimeOut = new Parameters("SessionInactivityTimeOut", Integer.class, 0);
+  public static final Parameters SessionInactivityTimeOut = new Parameters("SessionInactivityTimeOut", Integer.class, 600);
 
   /**
    * Return all parameters as iterator
