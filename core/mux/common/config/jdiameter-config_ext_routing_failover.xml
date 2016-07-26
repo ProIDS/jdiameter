@@ -31,8 +31,8 @@
     <MessageTimeOut value="60000" />
     <StopTimeOut value="10000" />
     <CeaTimeOut value="10000" />
-    <IacTimeOut value="30000" />
-    <DwaTimeOut value="10000" />
+    <IacTimeOut value="5000" />
+    <DwaTimeOut value="5000" />
     <DpaTimeOut value="5000" />
     <RecTimeOut value="10000" />
     <SessionInactivityTimeOut value="600" />
