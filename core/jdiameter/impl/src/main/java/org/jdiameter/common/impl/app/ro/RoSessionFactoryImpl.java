@@ -25,7 +25,9 @@ import org.jdiameter.api.Answer;
 import org.jdiameter.api.ApplicationId;
 import org.jdiameter.api.InternalException;
 import org.jdiameter.api.Message;
+import org.jdiameter.api.Peer;
 import org.jdiameter.api.Request;
+import org.jdiameter.api.RouteException;
 import org.jdiameter.api.SessionFactory;
 import org.jdiameter.api.app.AppAnswerEvent;
 import org.jdiameter.api.app.AppRequestEvent;
@@ -346,6 +348,14 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
 
   public void doOtherEvent(AppSession session, AppRequestEvent request, AppAnswerEvent answer) throws InternalException {
 
+  }
+  
+  public void doRequestTimeout(ClientRoSession session, Message msg, Peer peer) throws InternalException {
+    
+  }
+  
+  public void doPeerUnavailability(RouteException cause, ClientRoSession session, Message msg, Peer peer) throws InternalException {
+    
   }
 
   // Message Factory Methods --------------------------------------------------

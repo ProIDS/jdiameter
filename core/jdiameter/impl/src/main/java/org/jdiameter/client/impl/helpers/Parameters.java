@@ -384,6 +384,18 @@ public class Parameters extends Ordinal {
    * Irrelevant when session persistent routing is not enabled.
    */
   public static final Parameters SessionInactivityTimeOut = new Parameters("SessionInactivityTimeOut", Integer.class, 600);
+  
+  /**
+   * Tx timer as described in chapter 13. of RFC 4006:
+   * <pre>The Tx timer is introduced to control the waiting time in the client in the Pending state. The recommended value is 10 seconds.</pre>
+   */
+  public static final Parameters TxTimeOut = new Parameters("TxTimeOut", Long.class, 10000L);
+  
+  /**
+   * Retransmission stop timer which defines how long the stack should wait for the answer message from remote peers and carry on with
+   * retransmissions in case of delivery failures.
+   */
+  public static final Parameters RetransmissionTimeOut = new Parameters("RetransmissionTimeOut", Long.class, 45000L);
 
   /**
    * Return all parameters as iterator

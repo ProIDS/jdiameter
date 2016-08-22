@@ -35,6 +35,8 @@
     <DwaTimeOut value="5000" />
     <DpaTimeOut value="5000" />
     <RecTimeOut value="10000" />
+    <TxTimeOut value="10000" />
+    <RetransmissionTimeOut value="45000" />
     <SessionInactivityTimeOut value="600" />
 
     <PeerFSMThreadCount value="3" />
@@ -72,7 +74,7 @@
     
     <Realms>
       <!--  CCA -->
-      <Realm name="restcomm.org" peers="uas1-prio1.restcomm.org,uas2-prio1.restcomm.org,uas3-prio1.restcomm.org,uas4-prio2.restcomm.org,uas5-prio2.restcomm.org,uac1-prio1.restcomm.org,uac2-prio1.restcomm.org,uac3-prio1.restcomm.org,uac4-prio2.restcomm.org,uac5-prio2.restcomm.org" local_action="LOCAL" dynamic="false" exp_time="1">
+      <Realm name="restcomm.org" peers="uas1-prio1.restcomm.org,uas2-prio1.restcomm.org,uas3-prio1.restcomm.org,uas4-prio2.restcomm.org,uas5-prio2.restcomm.org,uac1-prio1.restcomm.org,uac2-prio1.restcomm.org" local_action="LOCAL" dynamic="false" exp_time="1">
         <ApplicationID>
           <VendorId value="0" />
           <AuthApplId value="4" />

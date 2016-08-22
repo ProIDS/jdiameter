@@ -135,6 +135,15 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
     return isSessionPersistentRoutingEnabled();
   }
 	
+	/*
+   * (non-Javadoc)
+   * @see org.jdiameter.client.impl.router.RouterImpl#getLastSelectedRating()
+   */
+  @Override
+  protected int getLastSelectedRating() {
+    return this.lastSelectedRating;
+  }
+	
   /*
    * (non-Javadoc)
    * @see org.jdiameter.client.impl.router.RouterImpl#isWrapperFor(java.lang.Class)

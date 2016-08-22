@@ -44,17 +44,15 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AppRoutingAwareSessionImpl extends AppSessionImpl {
 
-  private static final String SESSION_INACTIVITY_TIMER_NAME = "SESSION_INACTIVITY_TIMER";
-  private static final int SESSION_INACTIVITY_TIMER_DEFAULT_VALUE = 30 * 60;
+  private static final String SESSION_INACTIVITY_TIMER_NAME = "Ro_CLIENT_SESSION_INACTIVITY_TIMER";
 
   private static final Logger logger = LoggerFactory.getLogger(AppRoutingAwareSessionImpl.class);
 
-  private IPeerTable peerTable = null;
-  private IRoutingAwareSessionDatasource sessionPersistenceStorage = null;
+  private transient IPeerTable peerTable = null;
+  private transient IRoutingAwareSessionDatasource sessionPersistenceStorage = null;
   
   private final int sesInactivityTimerVal;
   private Serializable sesInactivityTimerId = null;
-
   
   /**
    * Parameterized constructor. If session persistence is supposed to be enabled, sessionStorage 
@@ -67,7 +65,7 @@ public abstract class AppRoutingAwareSessionImpl extends AppSessionImpl {
   public AppRoutingAwareSessionImpl(ISessionDatasource sessionStorage, ISessionFactory sessionFactory, IAppSessionData appSessionData) {
     super(sessionFactory, appSessionData);
     peerTable = sessionFactory.getContainer().getAssemblerFacility().getComponentInstance(IPeerTable.class);
-    sesInactivityTimerVal = sessionFactory.getContainer().getConfiguration().getIntValue(SessionInactivityTimeOut.ordinal(), SESSION_INACTIVITY_TIMER_DEFAULT_VALUE) * 1000;
+    sesInactivityTimerVal = sessionFactory.getContainer().getConfiguration().getIntValue(SessionInactivityTimeOut.ordinal(), (Integer) SessionInactivityTimeOut.defValue()) * 1000;
     if(sessionStorage instanceof IRoutingAwareSessionDatasource)
       sessionPersistenceStorage = (IRoutingAwareSessionDatasource) sessionStorage;
   }

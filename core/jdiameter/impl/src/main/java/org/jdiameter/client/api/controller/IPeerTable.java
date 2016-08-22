@@ -70,7 +70,7 @@ public interface IPeerTable extends PeerTable {
      * @throws RouteException
      * @throws AvpDataException
      */
-    void sendMessage(IMessage message) throws IllegalDiameterStateException, IOException, RouteException, AvpDataException;
+    void sendMessage(IMessage message) throws IllegalDiameterStateException, IOException, RouteException, NoMorePeersAvailableException, AvpDataException;
 
     /**
      * Register session lister

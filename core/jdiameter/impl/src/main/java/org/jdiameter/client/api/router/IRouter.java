@@ -40,7 +40,7 @@ import org.jdiameter.client.api.controller.IRealmTable;
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
  */
-public interface IRouter  extends Wrapper {
+public interface IRouter extends Wrapper {
 
   /**
    * Return peer from inner peer table by predefined parameters. Fetches peer based on message content, that is HBH or realm/host avp contents.

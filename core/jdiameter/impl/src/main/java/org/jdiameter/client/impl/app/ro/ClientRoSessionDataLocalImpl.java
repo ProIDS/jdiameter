@@ -39,6 +39,7 @@ public class ClientRoSessionDataLocalImpl extends AppSessionDataLocalImpl implem
   protected boolean requestTypeSet = false;
   protected ClientRoSessionState state = ClientRoSessionState.IDLE;
   protected Serializable txTimerId;
+  protected Serializable retransmissionTimerId;
   //protected JCreditControlRequest txTimerRequest;
   protected Request txTimerRequest;
 
@@ -95,6 +96,14 @@ public class ClientRoSessionDataLocalImpl extends AppSessionDataLocalImpl implem
 
   public void setTxTimerRequest(Request txTimerRequest) {
     this.txTimerRequest = txTimerRequest;
+  }
+  
+  public Serializable getRetransmissionTimerId() {
+    return retransmissionTimerId;
+  }
+
+  public void setRetransmissionTimerId(Serializable retransmissionTimerId) {
+    this.retransmissionTimerId = retransmissionTimerId;
   }
 
   public Request getBuffer() {

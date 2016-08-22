@@ -30,10 +30,12 @@ import static org.jdiameter.client.impl.helpers.Parameters.IacTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.MessageTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.QueueSize;
 import static org.jdiameter.client.impl.helpers.Parameters.RecTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.SessionInactivityTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.StatisticsLoggerDelay;
 import static org.jdiameter.client.impl.helpers.Parameters.StatisticsLoggerPause;
 import static org.jdiameter.client.impl.helpers.Parameters.StopTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.TxTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
 import static org.jdiameter.server.impl.helpers.Parameters.AcceptUndefinedPeer;
 import static org.jdiameter.server.impl.helpers.Parameters.DuplicateProtection;
@@ -74,6 +76,8 @@ public class ParametersImpl implements Parameters {
   private long dwaTimeout;
   private long dpaTimeout;
   private long recTimeout;
+  private long txTimeout;
+  private long retransmissionTimeOut;
   private int sessionInactivityTimeout;
 
   // Gone since merge with build-350
@@ -101,8 +105,10 @@ public class ParametersImpl implements Parameters {
     this.dwaTimeout = config.getLongValue(DwaTimeOut.ordinal(), 10000L);
     this.dpaTimeout = config.getLongValue(DpaTimeOut.ordinal(), 5000L);
     this.recTimeout = config.getLongValue(RecTimeOut.ordinal(), 10000L);
+    this.txTimeout = config.getLongValue(TxTimeOut.ordinal(), 10000);
+    this.retransmissionTimeOut = config.getLongValue(RetransmissionTimeOut.ordinal(), 45000L);
     this.sessionInactivityTimeout = config.getIntValue(SessionInactivityTimeOut.ordinal(), 600);
-
+    
     // Concurrent Entities
     for(Configuration concurrentEntity : config.getChildren(Concurrent.ordinal())) {
       String name = concurrentEntity.getStringValue(ConcurrentEntityName.ordinal(), null);
@@ -212,7 +218,7 @@ public class ParametersImpl implements Parameters {
     DiameterConfiguration.getMutableConfiguration().setLongValue(RecTimeOut.ordinal(), recTimeout);
   }
   
-  public long getSessionInactivityTimeout() {
+  public int getSessionInactivityTimeout() {
     return sessionInactivityTimeout;
   }
 
@@ -220,6 +226,22 @@ public class ParametersImpl implements Parameters {
     DiameterConfiguration.getMutableConfiguration().setLongValue(SessionInactivityTimeOut.ordinal(), sessionInactivityTimeout);
   }
 
+  public long getTxTimeout() {
+    return txTimeout;
+  }
+
+  public void setTxTimeout(long txTimeout) {
+    DiameterConfiguration.getMutableConfiguration().setLongValue(TxTimeOut.ordinal(), txTimeout);
+  }
+  
+  public long getRetransmissionTimeout() {
+    return retransmissionTimeOut;
+  }
+
+  public void setRetransmissionTimeout(long retrTimeout) {
+    DiameterConfiguration.getMutableConfiguration().setLongValue(RetransmissionTimeOut.ordinal(), retrTimeout);
+  }
+  
   /* Gone since merge with build-350
   public String getThreadPool_Priority() {
     return threadPool_Priority;

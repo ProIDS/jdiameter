@@ -107,6 +107,7 @@ import static org.jdiameter.client.impl.helpers.Parameters.ThreadPool;
 import static org.jdiameter.client.impl.helpers.Parameters.ThreadPoolPriority;
 import static org.jdiameter.client.impl.helpers.Parameters.ThreadPoolSize;
 import static org.jdiameter.client.impl.helpers.Parameters.TrustData;
+import static org.jdiameter.client.impl.helpers.Parameters.TxTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
 import static org.jdiameter.client.impl.helpers.Parameters.VendorId;
 import static org.jdiameter.server.impl.helpers.Parameters.RealmEntryExpTime;
@@ -331,7 +332,8 @@ public class XMLConfiguration extends EmptyConfiguration {
       else if (nodeName.equals("Statistics")) { addStatisticLogger(Statistics, c.item(i));              }
       else if (nodeName.equals("Concurrent")) { addConcurrent(Concurrent, c.item(i));                   }
       else if (nodeName.equals("Dictionary")) { addDictionary(Dictionary, c.item(i));                   }
-      else if (nodeName.equals("SessionInactivityTimeOut")) { add(SessionInactivityTimeOut, getIntValue(c.item(i)));                   }
+      else if (nodeName.equals("SessionInactivityTimeOut")) { add(SessionInactivityTimeOut, getIntValue(c.item(i)));}
+      else if (nodeName.equals("TxTimeOut")) { add(TxTimeOut, getLongValue(c.item(i)));  }
       else 
         appendOtherParameter(c.item(i));
     }

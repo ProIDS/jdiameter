@@ -190,7 +190,7 @@ public class PeerImpl extends AbstractPeer implements IPeer {
     public void connectionClosed(String connKey, List notSent) {
       logger.debug("Connection from {} is closed", uri);
       for (IMessage request : peerRequests.values()) {
-        if (request.getState() == IMessage.STATE_SENT) {
+        if (request.getState() == IMessage.STATE_SENT && !request.isRetransmissionSupervised()) {
           request.setReTransmitted(true);
           request.setState(IMessage.STATE_NOT_SENT);
           try {

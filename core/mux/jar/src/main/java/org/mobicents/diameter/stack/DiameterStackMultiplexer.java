@@ -768,6 +768,14 @@ public class DiameterStackMultiplexer extends ServiceMBeanSupport implements Dia
   public void _Parameters_setSessionInactivityTimeout(int timeout) throws MBeanException {
     getMutableConfiguration().setIntValue(SessionInactivityTimeOut.ordinal(), timeout);
   }
+  
+  public void _Parameters_setTxTimeout(long txTimeout) throws MBeanException {
+    getMutableConfiguration().setLongValue(TxTimeOut.ordinal(), txTimeout);
+  }
+  
+  public void _Parameters_setRetransmissionTimeout(long retransmissionTimeout) throws MBeanException {
+    getMutableConfiguration().setLongValue(RetransmissionTimeOut.ordinal(), retransmissionTimeout);
+  }
 
   public void _Parameters_setConcurrentEntity(String name, String desc, Integer size) throws MBeanException {
     for(Configuration c : getMutableConfiguration().getChildren(Concurrent.ordinal())) {

@@ -181,6 +181,7 @@ public class WeightedRoundRobinRouter extends RouterImpl {
      * 
      * @return readable summary of round-robin context
      */
+    @Override
     protected String dumpRoundRobinContext() {
       return String.format("Current round-robin context is: lastSelectedPeer=[%d] currentWeight=[%d]", lastSelectedPeer, currentWeight);
     }

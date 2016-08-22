@@ -197,6 +197,24 @@ public interface DiameterStackMultiplexerMBean extends ServiceMBean {
    */
   public void _Parameters_setSessionInactivityTimeout(int timeout) throws MBeanException;
 
+  /**
+   * Sets the waiting time in the client in the Pending state. (default: 10000, 10 seconds).
+   * 
+   * @param txTimeout the amount of time, in ms.
+   * @throws MBeanException if the operation is unable to perform correctly
+   */
+  public void _Parameters_setTxTimeout(long txTimeout) throws MBeanException;
+  
+  /**
+   * Defines one of failover algorithm stop conditions. Namely, in case of consecutive peers
+   * failures the failover algorithm will try to retransmit a given message to other peers
+   * until retransmission timeout expires.
+   * 
+   * @param retransmissionTimeout the amount of time, in ms.
+   * @throws MBeanException if the operation is unable to perform correctly
+   */
+  public void _Parameters_setRetransmissionTimeout(long retransmissionTimeout) throws MBeanException;
+  
   public void _Parameters_setConcurrentEntity(String name, String desc, Integer size) throws MBeanException;
 
   public void _Parameters_setStatisticLoggerDelay(long delay) throws MBeanException;

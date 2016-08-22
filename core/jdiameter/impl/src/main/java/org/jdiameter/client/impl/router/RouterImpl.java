@@ -63,6 +63,7 @@ import org.jdiameter.api.InternalException;
 import org.jdiameter.api.LocalAction;
 import org.jdiameter.api.Message;
 import org.jdiameter.api.MetaData;
+import org.jdiameter.api.NoMorePeersAvailableException;
 import org.jdiameter.api.PeerState;
 import org.jdiameter.api.RouteException;
 import org.jdiameter.api.URI;
@@ -419,7 +420,9 @@ public class RouterImpl implements IRouter {
       // Balancing
       IPeer peer = selectPeer(availablePeers, message);
       if (peer == null) {
-        throw new RouteException("Unable to find valid connection to peer[" + destHost + "] in realm[" + destRealm + "]");
+        throw new NoMorePeersAvailableException(
+            "Unable to find a valid connection within realm [" + destRealm + "]", 
+            isSessionAware(), dumpRoundRobinContext(), getLastSelectedRating());
       }
       else {
         if (logger.isDebugEnabled()) {
@@ -463,11 +466,10 @@ public class RouterImpl implements IRouter {
     return availablePeers;
   }
   
-  @Override
   public boolean isSessionAware() {
     return false;
   }
-
+  
   public IRealmTable getRealmTable() {
     return this.realmTable;
   }
@@ -572,14 +574,11 @@ public class RouterImpl implements IRouter {
       }
       //now send
       table.sendMessage((IMessage)request);
-    }
-    catch (AvpDataException exc) {
+    } catch (AvpDataException exc) {
       throw new InternalException(exc);
-    }
-    catch (IllegalDiameterStateException e) {
+    } catch (IllegalDiameterStateException e) {
       throw new InternalException(e);
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       throw new InternalException(e);
     }
   }
@@ -930,6 +929,14 @@ public class RouterImpl implements IRouter {
     public String toString() {
       return "AnswerEntry{" + "createTime=" + createTime + ", hopByHopId=" + hopByHopId + '}';
     }
+  }
+
+  protected String dumpRoundRobinContext() {
+    return "Load balancing is not supported";
+  }
+  
+  protected int getLastSelectedRating() {
+    return Integer.MIN_VALUE;
   }
 
   @Override

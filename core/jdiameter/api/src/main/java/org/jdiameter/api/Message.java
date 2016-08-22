@@ -204,5 +204,5 @@ public interface Message extends Wrapper, Serializable {
   /**
    * @return Set of message Avps
    */
-  AvpSet getAvps();    
+  AvpSet getAvps();
 }
