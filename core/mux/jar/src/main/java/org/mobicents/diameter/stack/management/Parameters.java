@@ -74,6 +74,14 @@ public interface Parameters extends Serializable {
   public long getRecTimeout();
 
   public void setRecTimeout(long recTimeout);
+  
+  public int getSessionInactivityTimeout();
+
+  public void setSessionInactivityTimeout(long sessionInactivityTimeout);
+  
+  public long getTxTimeout();
+
+  public void setTxTimeout(long txTimeout);
 
   /* Gone since merge with build-350
   public String getThreadPool_Priority();

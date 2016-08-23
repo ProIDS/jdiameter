@@ -77,7 +77,7 @@ public interface IContainer extends Stack {
      * @throws IllegalDiameterStateException
      * @throws IOException
      */
-    void sendMessage(IMessage session) throws RouteException, AvpDataException, IllegalDiameterStateException, IOException;
+    void sendMessage(IMessage session) throws RouteException, NoMorePeersAvailableException, AvpDataException, IllegalDiameterStateException, IOException;
 
 
     /**

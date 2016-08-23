@@ -149,6 +149,18 @@ public interface IMessage extends IRequest, IAnswer {
    * @return true if request has timeout
    */
   boolean isTimeOut();
+  
+  /**
+   * Tells if there are any timers set to monitor potential retransmissions
+   * @return true if potential retransmissions will be handled
+   */
+  boolean isRetransmissionSupervised();
+  
+  /**
+   * Marks that message to be under supervision timers guarding retransmissions
+   * @param arg true if supervision is active
+   */
+  void setRetransmissionSupervised(boolean arg);
 
   /**
    * Set event listener

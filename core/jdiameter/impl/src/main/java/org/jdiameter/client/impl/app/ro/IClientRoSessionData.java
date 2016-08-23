@@ -54,6 +54,10 @@ public interface IClientRoSessionData extends IRoSessionData {
   public Request getTxTimerRequest();
 
   public void setTxTimerRequest(Request txTimerRequest);
+  
+  public Serializable getRetransmissionTimerId();
+
+  public void setRetransmissionTimerId(Serializable retransmissionTimerId);
 
   public Request getBuffer();
 

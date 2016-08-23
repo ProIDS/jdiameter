@@ -67,6 +67,7 @@ public class MessageImpl implements IMessage {
   AvpSetImpl avpSet;
 
   boolean isNetworkRequest = false;
+  boolean isRetransSupervisionActive = false;
 
   transient IPeer peer;
   transient TimerTask timerTask;
@@ -230,6 +231,14 @@ public class MessageImpl implements IMessage {
     else {
       flags &= 0xEF;
     }
+  }
+  
+  public boolean isRetransmissionSupervised() {
+    return this.isRetransSupervisionActive;
+  }
+  
+  public void setRetransmissionSupervised(boolean arg) {
+    this.isRetransSupervisionActive = arg;
   }
 
   public int getCommandCode() {

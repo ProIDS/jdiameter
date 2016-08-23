@@ -59,6 +59,7 @@ import org.jdiameter.api.PeerTable;
 import org.jdiameter.api.Request;
 import org.jdiameter.api.ResultCode;
 import org.jdiameter.api.Session;
+import org.jdiameter.api.SessionPersistenceStorage;
 import org.jdiameter.api.Stack;
 import org.jdiameter.client.api.controller.IRealm;
 import org.jdiameter.client.api.controller.IRealmTable;
@@ -523,6 +524,7 @@ public class DiameterStackMultiplexer extends ServiceMBeanSupport implements Dia
    *  n QueueSize
    */
 
+  private static final String NEW_LINE = System.getProperty("line.separator");
   private final String DEFAULT_STRING = "default_string";
 
   private MutableConfiguration getMutableConfiguration() throws MBeanException {
@@ -762,6 +764,18 @@ public class DiameterStackMultiplexer extends ServiceMBeanSupport implements Dia
   public void _Parameters_setRecTimeout(long stopTimeout) throws MBeanException {
     getMutableConfiguration().setLongValue(RecTimeOut.ordinal(), stopTimeout);
   }
+  
+  public void _Parameters_setSessionInactivityTimeout(int timeout) throws MBeanException {
+    getMutableConfiguration().setIntValue(SessionInactivityTimeOut.ordinal(), timeout);
+  }
+  
+  public void _Parameters_setTxTimeout(long txTimeout) throws MBeanException {
+    getMutableConfiguration().setLongValue(TxTimeOut.ordinal(), txTimeout);
+  }
+  
+  public void _Parameters_setRetransmissionTimeout(long retransmissionTimeout) throws MBeanException {
+    getMutableConfiguration().setLongValue(RetransmissionTimeOut.ordinal(), retransmissionTimeout);
+  }
 
   public void _Parameters_setConcurrentEntity(String name, String desc, Integer size) throws MBeanException {
     for(Configuration c : getMutableConfiguration().getChildren(Concurrent.ordinal())) {
@@ -884,5 +898,21 @@ public class DiameterStackMultiplexer extends ServiceMBeanSupport implements Dia
     }
   }
 
-
+  public String _Network_Sessions_getPersistenceMap(int maxLimit) throws MBeanException {   
+    try {
+      SessionPersistenceStorage sds = stack.getSessionPersistenceStorage();
+      if(sds == null)
+        return "Session persistence is not supported in current configuration!!";
+      
+      StringBuilder sb = new StringBuilder();
+      List<String> sessions = sds.dumpStickySessions(maxLimit);
+      for(String session : sessions)
+        sb.append(session).append(NEW_LINE);
+      
+      return sb.length() > 0 ? sb.toString() : "No sessions found";
+    }
+    catch (Exception e) {
+      throw new MBeanException(e, "Failed to get session storage");
+    }
+  }
 }
