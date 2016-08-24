@@ -2103,6 +2103,7 @@
 			<avp name="Granted-Service-Unit" code="431" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Multiple-Services-Credit-Control" code="456" vendor="0" multiplicity="0+" index="-1" />
 			<avp name="Cost-Information" code="423" vendor="0" multiplicity="0-1" index="-1" />
+                        <avp name="Remaining-Balance" code="2021" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Final-Unit-Indication" code="430" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Check-Balance-Result" code="422" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Credit-Control-Failure-Handling" code="427" vendor="0" multiplicity="0-1" index="-1" />
@@ -3241,6 +3242,13 @@
 
 	<avpdefn name="Number-Of-Messages-Sent" code="2019" vendor-id="TGPP" mandatory="must" protected="may" may-encrypt="no" vendor-bit="must" >
 		<type type-name="Unsigned32" />
+	</avpdefn>
+
+	<avpdefn name="Remaining-Balance" code="2021" vendor-id="TGPP" mandatory="must" protected="may" may-encrypt="no" vendor-bit="must" >
+		<grouped>
+			<avp name="Unit-Value" />
+			<avp name="Currency-Code" />
+		</grouped>
 	</avpdefn>
 
 	<avpdefn name="Recipient-Info" code="2026" vendor-id="TGPP" mandatory="must" protected="may" may-encrypt="no" vendor-bit="must" >
@@ -7570,6 +7578,10 @@
 	</avpdefn>
 
 	<avpdefn name="MBMS-Required-QoS" code="913" vendor-id="TGPP" mandatory="must" protected="mustnot" may-encrypt="no" vendor-bit="must" >
+		<type type-name="UTF8String" />
+	</avpdefn>
+
+        <avpdefn name="Alternate-Charged-Party-Address" code="1280" vendor-id="TGPP" mandatory="must" protected="may" may-encrypt="no" vendor-bit="must" >
 		<type type-name="UTF8String" />
 	</avpdefn>
 
