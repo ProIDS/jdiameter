@@ -38,10 +38,9 @@ public class ClientRoSessionDataLocalImpl extends AppSessionDataLocalImpl implem
   protected boolean isEventBased = true;
   protected boolean requestTypeSet = false;
   protected ClientRoSessionState state = ClientRoSessionState.IDLE;
-  protected Serializable txTimerId;
-  protected Serializable retransmissionTimerId;
-  //protected JCreditControlRequest txTimerRequest;
-  protected Request txTimerRequest;
+  protected Serializable txTimerId = null;
+  protected Serializable retransmissionTimerId = null;
+  protected Request txTimerRequest = null;
 
   // Event Based Buffer
   //protected Message buffer = null;

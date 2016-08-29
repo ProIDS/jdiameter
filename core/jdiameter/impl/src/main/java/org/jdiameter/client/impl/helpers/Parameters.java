@@ -398,6 +398,11 @@ public class Parameters extends Ordinal {
   public static final Parameters RetransmissionTimeOut = new Parameters("RetransmissionTimeOut", Long.class, 45000L);
 
   /**
+   * Array of result codes which make an initial request to be retransmitted to another remote peer.
+   */
+  public static final Parameters RetransmissionRequiredResCodes = new Parameters("RetransmissionRequiredResCodes", Object.class);
+  
+  /**
    * Return all parameters as iterator
    * 
    * @return all parameters as iterator

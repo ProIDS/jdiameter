@@ -22,7 +22,35 @@
 
 package org.mobicents.diameter.stack;
 
-import static org.jdiameter.server.impl.helpers.Parameters.*;
+import static org.jdiameter.client.impl.helpers.Parameters.CeaTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.Concurrent;
+import static org.jdiameter.client.impl.helpers.Parameters.ConcurrentEntityDescription;
+import static org.jdiameter.client.impl.helpers.Parameters.ConcurrentEntityName;
+import static org.jdiameter.client.impl.helpers.Parameters.ConcurrentEntityPoolSize;
+import static org.jdiameter.client.impl.helpers.Parameters.DpaTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.DwaTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.IacTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.MessageTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.OwnDiameterURI;
+import static org.jdiameter.client.impl.helpers.Parameters.OwnIPAddress;
+import static org.jdiameter.client.impl.helpers.Parameters.OwnRealm;
+import static org.jdiameter.client.impl.helpers.Parameters.OwnVendorID;
+import static org.jdiameter.client.impl.helpers.Parameters.RealmEntry;
+import static org.jdiameter.client.impl.helpers.Parameters.RealmTable;
+import static org.jdiameter.client.impl.helpers.Parameters.RecTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionRequiredResCodes;
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.SessionInactivityTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.StatisticsLoggerDelay;
+import static org.jdiameter.client.impl.helpers.Parameters.StatisticsLoggerPause;
+import static org.jdiameter.client.impl.helpers.Parameters.StopTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.TxTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
+import static org.jdiameter.server.impl.helpers.Parameters.AcceptUndefinedPeer;
+import static org.jdiameter.server.impl.helpers.Parameters.DuplicateTimer;
+import static org.jdiameter.server.impl.helpers.Parameters.OwnIPAddresses;
+import static org.jdiameter.server.impl.helpers.Parameters.RealmHosts;
+import static org.jdiameter.server.impl.helpers.Parameters.RealmName;
 
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -775,6 +803,18 @@ public class DiameterStackMultiplexer extends ServiceMBeanSupport implements Dia
   
   public void _Parameters_setRetransmissionTimeout(long retransmissionTimeout) throws MBeanException {
     getMutableConfiguration().setLongValue(RetransmissionTimeOut.ordinal(), retransmissionTimeout);
+  }
+  
+  public void _Parameters_setRetransmissionRequiredResCodes(String resCodes) throws MBeanException {
+    if(resCodes != null && resCodes.length() > 0) {
+      String[] codesArray = resCodes.replaceAll(" ", "").split(",");
+      if(codesArray.length > 0) {
+        int[] parsedCodesArray = new int[codesArray.length];
+        for(int i=0; i < codesArray.length; i++)
+          parsedCodesArray[i] = Integer.parseInt(codesArray[i]);
+        getMutableConfiguration().setIntArrayValue(RetransmissionRequiredResCodes.ordinal(), parsedCodesArray);
+      }
+    }
   }
 
   public void _Parameters_setConcurrentEntity(String name, String desc, Integer size) throws MBeanException {

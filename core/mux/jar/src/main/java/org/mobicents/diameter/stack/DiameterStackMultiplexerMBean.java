@@ -215,6 +215,15 @@ public interface DiameterStackMultiplexerMBean extends ServiceMBean {
    */
   public void _Parameters_setRetransmissionTimeout(long retransmissionTimeout) throws MBeanException;
   
+  /**
+   * Defines a list of result codes which make an initial request to be retransmitted to
+   * another remote peer.
+   * 
+   * @param resCodes comma delimited list of result codes
+   * @throws MBeanException if the operation is unable to perform correctly
+   */
+  public void _Parameters_setRetransmissionRequiredResCodes(String resCodes) throws MBeanException;
+  
   public void _Parameters_setConcurrentEntity(String name, String desc, Integer size) throws MBeanException;
 
   public void _Parameters_setStatisticLoggerDelay(long delay) throws MBeanException;
