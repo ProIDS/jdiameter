@@ -22,6 +22,7 @@
 
 package org.jdiameter.client.impl.app.ro;
 
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionRequiredResCodes;
 import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.TxTimeOut;
 
@@ -105,6 +106,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   protected final long retransmissionTimerVal;
 
   protected long[] authAppIds = new long[] { 4 };
+  protected final Set<Long> retrRequiredErrorCodes;
 
   // Requested Action + Credit-Control and Direct-Debiting Failure-Handling ---
   protected static final int CCFH_TERMINATE = 0;
@@ -168,6 +170,11 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
     this.router = icontainer.getAssemblerFacility().getComponentInstance(IRouter.class);
     this.txTimerVal = icontainer.getConfiguration().getLongValue(TxTimeOut.ordinal(), (Long) TxTimeOut.defValue());
     this.retransmissionTimerVal = icontainer.getConfiguration().getLongValue(RetransmissionTimeOut.ordinal(), (Long) RetransmissionTimeOut.defValue());
+    
+    Set<Long> tmpErrCodes = new HashSet<>();
+    for(int val : icontainer.getConfiguration().getIntArrayValue(RetransmissionRequiredResCodes.ordinal(), new int[0]))
+      tmpErrCodes.add(new Long(val));
+    this.retrRequiredErrorCodes = Collections.unmodifiableSet(tmpErrCodes);
     
     super.addStateChangeNotification(stLst);
   }
@@ -359,18 +366,25 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
               startSessionInactivityTimer();
             }
           }
-          else if (isProvisional(resultCode) || isFailure(resultCode)) {
-            handleFailureMessage((RoCreditControlAnswer) answer, (RoCreditControlRequest) localEvent.getRequest(), eventType);
+          else if(retrRequiredErrorCodes.contains(resultCode)) {
+            handleRetransmission(eventType, localEvent.getRequest().getMessage(), false);
+            break;
           }
+          else if (isProvisional(resultCode) || isFailure(resultCode))
+            handleFailureMessage((RoCreditControlAnswer) answer, (RoCreditControlRequest) localEvent.getRequest(), eventType);
+
           deliverRoAnswer((RoCreditControlRequest) localEvent.getRequest(), (RoCreditControlAnswer) localEvent.getAnswer());
           break;
         case Tx_TIMER_FIRED:
-          handleRetransmission(eventType, localEvent.getRequest().getMessage());
+          if(isRetransmissionRequired())
+            handleRetransmission(eventType, localEvent.getRequest().getMessage(), true);
+          else
+            handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           //TODO is it even needed here??
           //handleTxExpires(localEvent.getRequest().getMessage());
           break;
         case RETRANSMISSION_TIMER_FIRED:
-          handleRetransmissionExpires((RoCreditControlRequest) localEvent.getRequest());
+          handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           break;
         case SEND_UPDATE_REQUEST:
         case SEND_TERMINATE_REQUEST:
@@ -484,18 +498,25 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
             stopTx();
             setState(ClientRoSessionState.OPEN);
           }
-          else if (isProvisional(resultCode) || isFailure(resultCode)) {
-            handleFailureMessage((RoCreditControlAnswer) answer, (RoCreditControlRequest) localEvent.getRequest(), eventType);
+          else if(retrRequiredErrorCodes.contains(resultCode)) {
+            handleRetransmission(eventType, localEvent.getRequest().getMessage(), false);
+            break;
           }
+          else if (isProvisional(resultCode) || isFailure(resultCode))
+            handleFailureMessage((RoCreditControlAnswer) answer, (RoCreditControlRequest) localEvent.getRequest(), eventType);
+
           deliverRoAnswer((RoCreditControlRequest) localEvent.getRequest(), (RoCreditControlAnswer) localEvent.getAnswer());
           break;
         case Tx_TIMER_FIRED:
-          handleRetransmission(eventType, localEvent.getRequest().getMessage());
+          if(isRetransmissionRequired())
+            handleRetransmission(eventType, localEvent.getRequest().getMessage(), true);
+          else
+            handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           //TODO is it even needed here??
           //handleTxExpires(localEvent.getRequest().getMessage());
           break;
         case RETRANSMISSION_TIMER_FIRED:
-          handleRetransmissionExpires((RoCreditControlRequest) localEvent.getRequest());
+          handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           break;
         case SEND_UPDATE_REQUEST:
         case SEND_TERMINATE_REQUEST:
@@ -558,16 +579,25 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
 
           //FIXME: Alex broke this, setting back "true" ? 
           //setState(ClientRoSessionState.IDLE, false);
+          long resultCode = ((AppAnswerEvent) localEvent.getAnswer()).getResultCodeAvp().getUnsigned32();
+          if(retrRequiredErrorCodes.contains(resultCode)) {
+            handleRetransmission(eventType, localEvent.getRequest().getMessage(), false);
+            break;
+          }
+
           deliverRoAnswer((RoCreditControlRequest) localEvent.getRequest(), (RoCreditControlAnswer) localEvent.getAnswer());
           setState(ClientRoSessionState.IDLE, true);
           break;
         case Tx_TIMER_FIRED:
-          handleRetransmission(eventType, localEvent.getRequest().getMessage());
+          if(isRetransmissionRequired())
+            handleRetransmission(eventType, localEvent.getRequest().getMessage(), true);
+          else
+            handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           //TODO is it even needed here??
           //handleTxExpires(localEvent.getRequest().getMessage());
           break;
         case RETRANSMISSION_TIMER_FIRED:
-          handleRetransmissionExpires((RoCreditControlRequest) localEvent.getRequest());
+          handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           break;
         default:
           logger.warn("Wrong event type ({}) on state {}", eventType, state);
@@ -639,7 +669,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   protected void stopTx(boolean stopDependant) {
     Serializable txTimerId = this.sessionData.getTxTimerId();
     if(txTimerId != null) {
-      if(stopDependant && sessionData.getTxTimerRequest().isReTransmitted())
+      if(stopDependant)
         stopFailoverStopTimer();
       logger.debug("Stopping Tx timer [{}]", txTimerId);
       timerFacility.cancel(txTimerId);
@@ -1203,7 +1233,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
     }
   }
   
-  protected void handleRetransmissionExpires(RoCreditControlRequest req) {
+  protected void handleRetransmissionFailure(RoCreditControlRequest req) {
     try {
       deliverRequestTimeout(req.getMessage());
       resetMessageStatus((IMessage) req.getMessage());
@@ -1214,11 +1244,10 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
     setState(ClientRoSessionState.IDLE, true);
   }
 
-  protected void handleRetransmission(Type eventType, Message msg) {
-    if(!msg.isReTransmitted()) {
-      msg.setReTransmitted(true);
+  protected void handleRetransmission(Type eventType, Message msg, boolean tFlagSetting) {
+    msg.setReTransmitted(tFlagSetting);
+    if(this.sessionData.getRetransmissionTimerId() == null)
       startFailoverStopTimer();
-    }
     
     if(isSessionPersistenceEnabled()) {
       String oldPeer = flushSessionPersistenceContext();
@@ -1394,6 +1423,10 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
 
   protected boolean isFailure(long code) {
     return (!isProvisional(code) && !isSuccess(code) && ((code >= 3000 && /*code < 4000) || (code >= 5000 &&*/ code < 6000)) && !temporaryErrorCodes.contains(code));
+  }
+  
+  protected boolean isRetransmissionRequired() {
+    return (getLocalCCFH() == CCFH_CONTINUE || getLocalCCFH() == CCFH_RETRY_AND_TERMINATE);
   }
 
   /* (non-Javadoc)

@@ -37,6 +37,7 @@
     <RecTimeOut value="10000" />
     <TxTimeOut value="10000" />
     <RetransmissionTimeOut value="45000" />
+    <RetransmissionRequiredResCodes value="3004,3005" />
     <SessionInactivityTimeOut value="600" />
 
     <PeerFSMThreadCount value="3" />

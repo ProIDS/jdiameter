@@ -31,6 +31,7 @@ import static org.jdiameter.client.impl.helpers.Parameters.MessageTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.QueueSize;
 import static org.jdiameter.client.impl.helpers.Parameters.RecTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionRequiredResCodes;
 import static org.jdiameter.client.impl.helpers.Parameters.SessionInactivityTimeOut;
 import static org.jdiameter.client.impl.helpers.Parameters.StatisticsLoggerDelay;
 import static org.jdiameter.client.impl.helpers.Parameters.StatisticsLoggerPause;
@@ -46,6 +47,7 @@ import static org.jdiameter.client.impl.helpers.Parameters.ConcurrentEntityPoolS
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jdiameter.api.Configuration;
@@ -78,6 +80,7 @@ public class ParametersImpl implements Parameters {
   private long recTimeout;
   private long txTimeout;
   private long retransmissionTimeOut;
+  private String retransmissionRequiredResCodes;
   private int sessionInactivityTimeout;
 
   // Gone since merge with build-350
@@ -107,6 +110,7 @@ public class ParametersImpl implements Parameters {
     this.recTimeout = config.getLongValue(RecTimeOut.ordinal(), 10000L);
     this.txTimeout = config.getLongValue(TxTimeOut.ordinal(), 10000);
     this.retransmissionTimeOut = config.getLongValue(RetransmissionTimeOut.ordinal(), 45000L);
+    this.retransmissionRequiredResCodes = Arrays.toString(config.getIntArrayValue(RetransmissionRequiredResCodes.ordinal(), null));
     this.sessionInactivityTimeout = config.getIntValue(SessionInactivityTimeOut.ordinal(), 600);
     
     // Concurrent Entities
@@ -240,6 +244,14 @@ public class ParametersImpl implements Parameters {
 
   public void setRetransmissionTimeout(long retrTimeout) {
     DiameterConfiguration.getMutableConfiguration().setLongValue(RetransmissionTimeOut.ordinal(), retrTimeout);
+  }
+  
+  public String getRetransmissionRequiredResCodes() {
+    return retransmissionRequiredResCodes;
+  }
+
+  public void setTxTimeout(int[] resCodes) {
+    DiameterConfiguration.getMutableConfiguration().setIntArrayValue(RetransmissionRequiredResCodes.ordinal(), resCodes);
   }
   
   /* Gone since merge with build-350
