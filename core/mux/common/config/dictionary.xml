@@ -2103,7 +2103,7 @@
 			<avp name="Granted-Service-Unit" code="431" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Multiple-Services-Credit-Control" code="456" vendor="0" multiplicity="0+" index="-1" />
 			<avp name="Cost-Information" code="423" vendor="0" multiplicity="0-1" index="-1" />
-                        <avp name="Remaining-Balance" code="2021" vendor="0" multiplicity="0-1" index="-1" />
+			<avp name="Remaining-Balance" code="2021" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Final-Unit-Indication" code="430" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Check-Balance-Result" code="422" vendor="0" multiplicity="0-1" index="-1" />
 			<avp name="Credit-Control-Failure-Handling" code="427" vendor="0" multiplicity="0-1" index="-1" />
