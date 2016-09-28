@@ -161,7 +161,26 @@ public interface IMessage extends IRequest, IAnswer {
    * @param arg true if supervision is active
    */
   void setRetransmissionSupervised(boolean arg);
-
+  
+  /**
+   * Tells if the number of allowed retransmissions for this message is
+   * already exceeded or not.
+   * @return false if no more retransmissions are allowed
+   */
+  public boolean isRetransmissionAllowed();
+  
+  /**
+   * Sets the number of allowed retransmissions for this message that can be performed
+   * in case of failure detection.
+   * @param arg number of allowed retransmissions
+   */
+  public void setNumberOfRetransAllowed(int arg);
+  
+  /**
+   * Decrements the number of allowed retransmissions for this message.
+   */
+  public void decrementNumberOfRetransAllowed();
+  
   /**
    * Set event listener
    * @param listener event listener

@@ -93,7 +93,9 @@ public class NoMorePeersAvailableException extends RouteException {
         .append(sessionPersistentRoutingEnabled)
         .append(", lastSelectedPeerRating=").append(lastSelectedPeerRating)
         .append(", roundRobinContextDescription=")
-        .append(roundRobinContextDescription).append("]");
+        .append(roundRobinContextDescription)
+        .append(", message=").append(getMessage())
+        .append("]");
     return builder.toString();
   }
 }

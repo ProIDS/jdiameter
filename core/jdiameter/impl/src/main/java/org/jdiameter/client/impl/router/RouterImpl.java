@@ -413,8 +413,11 @@ public class RouterImpl implements IRouter {
       
       List<IPeer> availablePeers = getAvailablePeers(destRealm, peers, manager);
       
+      if(message.isRetransmissionSupervised())
+        message.setNumberOfRetransAllowed(availablePeers.size()-1);
+      
       if(logger.isDebugEnabled()) {
-        logger.debug("Performing Realm routing. Realm [{}] has the following peers available [{}] from list [{}]", new Object[] {destRealm, availablePeers, Arrays.asList(peers)});
+        logger.debug("Performing Realm routing. Realm [{}] has the following peers available {} from list {}", new Object[] {destRealm, availablePeers, Arrays.asList(peers)});
       }
 
       // Balancing

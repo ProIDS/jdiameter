@@ -336,6 +336,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           try {
             dispatchEvent(localEvent.getRequest());
           }
+          catch(NoMorePeersAvailableException nmpae) {
+            handlePeerUnavailability(localEvent.getRequest().getMessage(), nmpae);
+          }
           catch (Exception e) {
             // This handles failure to send in PendingI state in FSM table
             handleSendFailure(e, eventType, localEvent.getRequest().getMessage());
@@ -367,7 +370,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
             }
           }
           else if(retrRequiredErrorCodes.contains(resultCode)) {
-            handleRetransmission(eventType, localEvent.getRequest().getMessage(), false);
+            handleRetransmissionDueToError(eventType, localEvent.getRequest().getMessage());
             break;
           }
           else if (isProvisional(resultCode) || isFailure(resultCode))
@@ -377,11 +380,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           break;
         case Tx_TIMER_FIRED:
           if(isRetransmissionRequired())
-            handleRetransmission(eventType, localEvent.getRequest().getMessage(), true);
+            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest().getMessage());
           else
             handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
-          //TODO is it even needed here??
-          //handleTxExpires(localEvent.getRequest().getMessage());
           break;
         case RETRANSMISSION_TIMER_FIRED:
           handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
@@ -434,6 +435,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           try {
             dispatchEvent(localEvent.getRequest());
           }
+          catch(NoMorePeersAvailableException nmpae) {
+            handlePeerUnavailability(localEvent.getRequest().getMessage(), nmpae);
+          }
           catch (Exception e) {
             // This handles failure to send in PendingI state in FSM table
             handleSendFailure(e, eventType, localEvent.getRequest().getMessage());
@@ -462,6 +466,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           setState(ClientRoSessionState.PENDING_TERMINATION);
           try {
             dispatchEvent(localEvent.getRequest());
+          }
+          catch(NoMorePeersAvailableException nmpae) {
+            handlePeerUnavailability(localEvent.getRequest().getMessage(), nmpae);
           }
           catch (Exception e) {
             handleSendFailure(e, eventType, localEvent.getRequest().getMessage());
@@ -499,7 +506,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
             setState(ClientRoSessionState.OPEN);
           }
           else if(retrRequiredErrorCodes.contains(resultCode)) {
-            handleRetransmission(eventType, localEvent.getRequest().getMessage(), false);
+            handleRetransmissionDueToError(eventType, localEvent.getRequest().getMessage());
             break;
           }
           else if (isProvisional(resultCode) || isFailure(resultCode))
@@ -509,11 +516,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           break;
         case Tx_TIMER_FIRED:
           if(isRetransmissionRequired())
-            handleRetransmission(eventType, localEvent.getRequest().getMessage(), true);
+            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest().getMessage());
           else
             handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
-          //TODO is it even needed here??
-          //handleTxExpires(localEvent.getRequest().getMessage());
           break;
         case RETRANSMISSION_TIMER_FIRED:
           handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
@@ -581,7 +586,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           //setState(ClientRoSessionState.IDLE, false);
           long resultCode = ((AppAnswerEvent) localEvent.getAnswer()).getResultCodeAvp().getUnsigned32();
           if(retrRequiredErrorCodes.contains(resultCode)) {
-            handleRetransmission(eventType, localEvent.getRequest().getMessage(), false);
+            handleRetransmissionDueToError(eventType, localEvent.getRequest().getMessage());
             break;
           }
 
@@ -590,11 +595,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           break;
         case Tx_TIMER_FIRED:
           if(isRetransmissionRequired())
-            handleRetransmission(eventType, localEvent.getRequest().getMessage(), true);
+            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest().getMessage());
           else
             handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
-          //TODO is it even needed here??
-          //handleTxExpires(localEvent.getRequest().getMessage());
           break;
         case RETRANSMISSION_TIMER_FIRED:
           handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
@@ -781,6 +784,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   }
 
   protected void handleSendFailure(Exception e, Event.Type eventType, Message request) throws Exception {
+    logger.warn("Failed to send message", e);
     logger.debug("Failed to send message, type: {} message: {}, failure: {}", new Object[]{eventType, request, e != null ? e.getLocalizedMessage() : ""});
     try {
       ClientRoSessionState state = sessionData.getClientRoSessionState();
@@ -1205,8 +1209,6 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           // Action: Grant service to end user
           // New State: PENDING_U
           context.grantAccessOnTxExpire(this);
-          if(isSessionPersistenceEnabled())
-            stopSessionInactivityTimer();
           break;
 
         case CCFH_TERMINATE:
@@ -1224,13 +1226,13 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
         }
         break;
 
-      case PENDING_TERMINATION:
-        //TODO init retranmission here
       default:
         logger.error("Unknown state (" + sessionData.getClientRoSessionState() + ") on txExpire");
         break;
       }
     }
+    
+    this.release();
   }
   
   protected void handleRetransmissionFailure(RoCreditControlRequest req) {
@@ -1243,8 +1245,14 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
 
     setState(ClientRoSessionState.IDLE, true);
   }
+  
+  protected void handlePeerUnavailability(Message msg, NoMorePeersAvailableException nmpae) {
+    deliverPeerUnavailabilityError(msg, nmpae);
+    resetMessageStatus(msg);
+    setState(ClientRoSessionState.IDLE, true);
+  }
 
-  protected void handleRetransmission(Type eventType, Message msg, boolean tFlagSetting) {
+  protected void handleRetransmission(Type eventType, IMessage msg, boolean tFlagSetting) {
     msg.setReTransmitted(tFlagSetting);
     if(this.sessionData.getRetransmissionTimerId() == null)
       startFailoverStopTimer();
@@ -1261,9 +1269,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
       dispatchEvent(msg);
     }
     catch(NoMorePeersAvailableException nmpae) {
-      deliverPeerUnavailabilityError(msg, nmpae);
-      resetMessageStatus(msg);
-      setState(ClientRoSessionState.IDLE, true);
+      handlePeerUnavailability(msg, nmpae);
     }
     catch (Exception e1) {
       logger.error("Cannot retransmit an old request", e1);
@@ -1273,6 +1279,24 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
         logger.error("Failure handling error", e2);
       }
     }
+  }
+  
+  protected void handleRetransmissionDueToError(Type eventType, Message msg) {
+    IMessage imsg = (IMessage) msg;
+
+    if(!imsg.isRetransmissionAllowed()) {
+      NoMorePeersAvailableException cause = new NoMorePeersAvailableException("No more peers available for retransmission");
+      cause.setSessionPersistentRoutingEnabled(router.isSessionAware());
+      handlePeerUnavailability(msg, cause);
+      return;
+    }
+
+    handleRetransmission(eventType, imsg, false);
+    imsg.decrementNumberOfRetransAllowed();
+  }
+  
+  protected void handleRetransmissionDueToTimeout(Type eventType, Message msg) {
+    handleRetransmission(eventType, (IMessage) msg, true);
   }
   
   /**
@@ -1350,7 +1374,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   }
   
   protected void deliverPeerUnavailabilityError(Message msg, NoMorePeersAvailableException cause) {
-    logger.debug("Propagating peer unavailability error event to listener [{}] on {} session", listener, isValid()?"valid":"invalid");
+    logger.debug("Propagating peer unavailability error event to listener [{}] on {} session", listener, isValid() ? "valid" : "invalid");
     try {
       if(isValid()) {
         listener.doPeerUnavailability(cause, this, msg, ((IMessage) msg).getPeer());
@@ -1403,14 +1427,14 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
     }
   }
 
-  protected void dispatchEvent(Message message) throws InternalException, IllegalDiameterStateException, RouteException, OverloadException {
+  protected void dispatchEvent(IMessage message) throws InternalException, IllegalDiameterStateException, RouteException, OverloadException {
     if(message.isRequest())
-      ((IMessage) message).setRetransmissionSupervised(true);
+      message.setRetransmissionSupervised(true);
     session.send(message, this);
   }
   
   protected void dispatchEvent(AppEvent event) throws InternalException, IllegalDiameterStateException, RouteException, OverloadException {
-    dispatchEvent(event.getMessage());
+    dispatchEvent((IMessage) event.getMessage());
   }
 
   protected boolean isProvisional(long resultCode) {
@@ -1453,13 +1477,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
         logger.debug("Fired Tx timer");
         sessionData.setTxTimerId(null);
         sessionData.setTxTimerRequest(null);
-        try {
-          //TODO Failover algorithm stop conditions should be handled here and in RetransmissionTimerTask as well
-          //context.txTimerExpired(session);
-        }
-        catch (Exception e) {
-          logger.debug("Failure handling TX Timer Expired", e);
-        }
+        
         RoCreditControlRequest req = factory.createCreditControlRequest(request);
         handleEvent(new Event(Event.Type.Tx_TIMER_FIRED, req, null));
       }
@@ -1535,8 +1553,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   private void resetMessageStatus(Message message) {
     IMessage msg = (IMessage) message;
     msg.clearTimer();
-    msg.getPeer().remMessage(msg);
     msg.setState(IMessage.STATE_NOT_SENT);
+    if(msg.getPeer() != null)
+      msg.getPeer().remMessage(msg);
     router.garbageCollectRequestRouteInfo(msg);
   }
 
