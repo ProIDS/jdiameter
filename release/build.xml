@@ -87,7 +87,7 @@
 
 	<!-- Definition -->
 	<property environment="sys" />
-	<condition property="mvn.executable" value="${sys.M2_HOME}\bin\mvn.bat" else="mvn">
+	<condition property="mvn.executable" value="c:\opt\maven\apache-maven-3.2.1\bin\mvn.bat" else="mvn">
 		<os family="windows" />
 	</condition>
 
