@@ -462,8 +462,7 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
   }
 
   public void txTimerExpired(ClientRoSession session) {
-    // this.resourceAdaptor.sessionDestroyed(session.getSessions().get(0).getSessionId(), session);
-    session.release();
+    // TODO Auto-generated method stub
   }
 
   public long[] getApplicationIds() {

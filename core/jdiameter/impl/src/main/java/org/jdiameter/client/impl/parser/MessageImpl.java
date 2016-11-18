@@ -68,6 +68,7 @@ public class MessageImpl implements IMessage {
 
   boolean isNetworkRequest = false;
   boolean isRetransSupervisionActive = false;
+  int numberOfRetransAllowed = Integer.MIN_VALUE;
 
   transient IPeer peer;
   transient TimerTask timerTask;
@@ -239,6 +240,19 @@ public class MessageImpl implements IMessage {
   
   public void setRetransmissionSupervised(boolean arg) {
     this.isRetransSupervisionActive = arg;
+  }
+  
+  public boolean isRetransmissionAllowed() {
+    return this.numberOfRetransAllowed > 0;
+  }
+  
+  public void setNumberOfRetransAllowed(int arg) {
+    if(this.numberOfRetransAllowed < 0)
+      this.numberOfRetransAllowed = arg;
+  }
+  
+  public void decrementNumberOfRetransAllowed() {
+    this.numberOfRetransAllowed--;
   }
 
   public int getCommandCode() {

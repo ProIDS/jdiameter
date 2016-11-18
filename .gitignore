@@ -1,32 +1,48 @@
-# Java compiled #
-#################
+######## Java compiled #########
+################################                                                                   
 *.class
 
-# Eclipse #
-###########
+########### Eclipse ############
+################################
 .classpath
 .project
 .settings
 
-# IntelliJ IDEA #
-#################
-.idea/
+######## IntelliJ IDEA #########
+################################
+.idea
 *.iml
 *.iws
 
-# Maven #
-#########
+########## NetBeans ############
+################################
+nbactions.xml
+
+# Mobile Tools for Java (J2ME) #
+################################
+.mtj.tmp
+
+############ Maven #############
+################################
 target
 \$\{env.JBOSS_HOME\}
+*.jar
+*.war
+*.ear
 
-# OS generated files #
-######################
+###### OS generated files ######
+################################
+.directory
+.Trashes
+._*
+*~
 .DS_Store
 .DS_Store?
-._*
 .Spotlight-V100
-.Trashes
 Icon?
 ehthumbs.db
 Thumbs.db
-*~
+
+######## VM crash logs #########
+################################
+hs_err_pid*
