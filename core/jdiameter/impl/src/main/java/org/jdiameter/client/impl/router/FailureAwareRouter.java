@@ -19,9 +19,6 @@
 
 package org.jdiameter.client.impl.router;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jdiameter.api.Configuration;
 import org.jdiameter.api.MetaData;
 import org.jdiameter.client.api.IContainer;
@@ -34,6 +31,9 @@ import org.jdiameter.common.api.data.IRoutingAwareSessionDatasource;
 import org.jdiameter.common.api.data.ISessionDatasource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Extends capabilities of basic router implementation {@link RouterImpl} with extra features
@@ -105,12 +105,14 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
 	    if(sessionAssignedPeer != null) {
 	      logger.debug("Sticky sessions are enabled and peer [{}] is assigned to the current session [{}]", new Object[] { sessionAssignedPeer, message.getSessionId() });
 	      peer = findPeer(sessionAssignedPeer, availablePeers);
-  	    if(peer != null)
-  	      return peer;
-  	    else
-  	      logger.debug("Peer [{}] assigned to session [{}] so far is not available anymore", sessionAssignedPeer, message.getSessionId());
-	    } else
-	      logger.debug("Sticky sessions are enabled and no peer has been yet assigned to the current session [{}]", message.getSessionId());
+	      if(peer != null) {
+			  return peer;
+		  } else {
+			  logger.debug("Peer [{}] assigned to session [{}] so far is not available anymore", sessionAssignedPeer, message.getSessionId());
+		  }
+	    } else {
+			logger.debug("Sticky sessions are enabled and no peer has been yet assigned to the current session [{}]", message.getSessionId());
+		}
 	  }
 	  
 	  logger.debug(super.dumpRoundRobinContext());
