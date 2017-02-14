@@ -42,36 +42,6 @@
 
 package org.jdiameter.server.impl;
 
-import static org.jdiameter.client.impl.helpers.Parameters.PeerName;
-import static org.jdiameter.client.impl.helpers.Parameters.PeerTable;
-import static org.jdiameter.client.impl.helpers.Parameters.StopTimeOut;
-import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
-import static org.jdiameter.common.api.concurrent.IConcurrentFactory.ScheduledExecServices.ConnectionTimer;
-import static org.jdiameter.common.api.concurrent.IConcurrentFactory.ScheduledExecServices.DuplicationMessageTimer;
-import static org.jdiameter.common.api.concurrent.IConcurrentFactory.ScheduledExecServices.PeerOverloadTimer;
-import static org.jdiameter.server.impl.helpers.Parameters.AcceptUndefinedPeer;
-import static org.jdiameter.server.impl.helpers.Parameters.DuplicateProtection;
-import static org.jdiameter.server.impl.helpers.Parameters.DuplicateSize;
-import static org.jdiameter.server.impl.helpers.Parameters.DuplicateTimer;
-import static org.jdiameter.server.impl.helpers.Parameters.PeerAttemptConnection;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.URISyntaxException;
-import java.net.UnknownServiceException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import org.jdiameter.api.Avp;
 import org.jdiameter.api.AvpDataException;
 import org.jdiameter.api.Configuration;
@@ -101,6 +71,7 @@ import org.jdiameter.client.api.io.IConnectionListener;
 import org.jdiameter.client.api.io.TransportException;
 import org.jdiameter.client.api.parser.IMessageParser;
 import org.jdiameter.client.impl.controller.PeerTableImpl;
+import org.jdiameter.client.impl.helpers.Parameters;
 import org.jdiameter.common.api.concurrent.IConcurrentFactory;
 import org.jdiameter.common.api.statistic.IStatisticManager;
 import org.jdiameter.server.api.IFsmFactory;
@@ -114,6 +85,34 @@ import org.jdiameter.server.api.io.ITransportLayerFactory;
 import org.jdiameter.server.impl.helpers.EmptyConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.UnknownServiceException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import static org.jdiameter.client.impl.helpers.Parameters.PeerName;
+import static org.jdiameter.client.impl.helpers.Parameters.StopTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
+import static org.jdiameter.common.api.concurrent.IConcurrentFactory.ScheduledExecServices.ConnectionTimer;
+import static org.jdiameter.common.api.concurrent.IConcurrentFactory.ScheduledExecServices.DuplicationMessageTimer;
+import static org.jdiameter.common.api.concurrent.IConcurrentFactory.ScheduledExecServices.PeerOverloadTimer;
+import static org.jdiameter.server.impl.helpers.Parameters.AcceptUndefinedPeer;
+import static org.jdiameter.server.impl.helpers.Parameters.DuplicateProtection;
+import static org.jdiameter.server.impl.helpers.Parameters.DuplicateSize;
+import static org.jdiameter.server.impl.helpers.Parameters.DuplicateTimer;
+import static org.jdiameter.server.impl.helpers.Parameters.PeerAttemptConnection;
 
 /**
  * 
@@ -226,6 +225,30 @@ public class MutablePeerTableImpl extends PeerTableImpl implements IMutablePeerT
     init(stack,router, config, metaData, fsmFactory, transportFactory, statisticFactory, concurrentFactory, parser);
     logger.debug("MutablePeerTableImpl has finished initialisation");
   }
+
+  protected Configuration getPeerConfig(String fqdn) throws URISyntaxException, UnknownServiceException {
+    if(logger.isDebugEnabled()) {
+      logger.debug("Searching configuration for peer fqdn: " + fqdn);
+    }
+    Configuration result = null;
+    Configuration[] peers = config.getChildren(Parameters.PeerTable.ordinal());
+    if (peers != null && peers.length > 0) {
+      for (Configuration peerConfig : peers) {
+        if (peerConfig.isAttributeExist(PeerName.ordinal())) {
+          String peerConfigFqdn = new URI(peerConfig.getStringValue(PeerName.ordinal(), "")).getFQDN();
+          if(fqdn.equals(peerConfigFqdn)) {
+            result =  peerConfig;
+            break;
+          }
+        }
+      }
+    }
+    if(logger.isDebugEnabled()) {
+      logger.debug("Peer configuration {}found for FQDN: {}", (result == null ? "not " : ""), fqdn);
+    }
+    return result;
+  }
+
 
   @Override
   protected Peer createPeer(int rating, String uri, String ip, String portRange, MetaData metaData, Configuration globalConfig,
@@ -497,7 +520,7 @@ public class MutablePeerTableImpl extends PeerTableImpl implements IMutablePeerT
                           }
 
                           peer = newPeerInstance(0, uri, connection.getRemoteAddress().getHostAddress(), null, false, connection,
-                              metaData, config, null, fsmFactory, transportFactory, parser, statisticFactory, concurrentFactory);
+                              metaData, config, getPeerConfig(uri.getFQDN()), fsmFactory, transportFactory, parser, statisticFactory, concurrentFactory);
                           logger.debug("Created new peer instance [{}] and adding to peer table", peer);
                           peer.setRealm(realm);
                           appendPeerToPeerTable(peer);
@@ -623,15 +646,8 @@ public class MutablePeerTableImpl extends PeerTableImpl implements IMutablePeerT
     //TODO: add sKey here, now it adds peer to all realms.
     //TODO: better, separate addPeer from realm!
     try {
-      Configuration peerConfig = null;
-      Configuration[] peers = config.getChildren(PeerTable.ordinal());
-      // find peer config
-      for (Configuration c : peers) {
-        if (peerURI.getFQDN().equals(c.getStringValue(PeerName.ordinal(), ""))) {
-          peerConfig = c;
-          break;
-        }
-      }
+      Configuration peerConfig = getPeerConfig(peerURI.getFQDN());
+
       if (peerConfig == null) {
         peerConfig = new EmptyConfiguration(false).add(PeerAttemptConnection, connecting);
       }

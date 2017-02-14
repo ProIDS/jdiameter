@@ -42,52 +42,6 @@
 
 package org.jdiameter.client.impl.controller;
 
-import static org.jdiameter.api.Avp.ACCT_APPLICATION_ID;
-import static org.jdiameter.api.Avp.AUTH_APPLICATION_ID;
-import static org.jdiameter.api.Avp.DESTINATION_HOST;
-import static org.jdiameter.api.Avp.DESTINATION_REALM;
-import static org.jdiameter.api.Avp.DISCONNECT_CAUSE;
-import static org.jdiameter.api.Avp.ERROR_MESSAGE;
-import static org.jdiameter.api.Avp.FIRMWARE_REVISION;
-import static org.jdiameter.api.Avp.HOST_IP_ADDRESS;
-import static org.jdiameter.api.Avp.ORIGIN_HOST;
-import static org.jdiameter.api.Avp.ORIGIN_REALM;
-import static org.jdiameter.api.Avp.ORIGIN_STATE_ID;
-import static org.jdiameter.api.Avp.PRODUCT_NAME;
-import static org.jdiameter.api.Avp.RESULT_CODE;
-import static org.jdiameter.api.Avp.SUPPORTED_VENDOR_ID;
-import static org.jdiameter.api.Avp.VENDOR_ID;
-import static org.jdiameter.api.Avp.VENDOR_SPECIFIC_APPLICATION_ID;
-import static org.jdiameter.api.Message.CAPABILITIES_EXCHANGE_REQUEST;
-import static org.jdiameter.api.Message.DEVICE_WATCHDOG_REQUEST;
-import static org.jdiameter.api.Message.DISCONNECT_PEER_REQUEST;
-import static org.jdiameter.client.api.fsm.EventTypes.CEA_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.CER_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.CONNECT_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.DISCONNECT_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.DPA_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.DPR_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.DWA_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.DWR_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.INTERNAL_ERROR;
-import static org.jdiameter.client.api.fsm.EventTypes.RECEIVE_MSG_EVENT;
-import static org.jdiameter.client.api.fsm.EventTypes.STOP_EVENT;
-import static org.jdiameter.client.impl.helpers.Parameters.SecurityRef;
-import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.jdiameter.api.ApplicationId;
 import org.jdiameter.api.Avp;
 import org.jdiameter.api.AvpDataException;
@@ -134,6 +88,53 @@ import org.jdiameter.common.impl.controller.AbstractPeer;
 import org.jdiameter.server.impl.MutablePeerTableImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.jdiameter.api.Avp.ACCT_APPLICATION_ID;
+import static org.jdiameter.api.Avp.AUTH_APPLICATION_ID;
+import static org.jdiameter.api.Avp.DESTINATION_HOST;
+import static org.jdiameter.api.Avp.DESTINATION_REALM;
+import static org.jdiameter.api.Avp.DISCONNECT_CAUSE;
+import static org.jdiameter.api.Avp.ERROR_MESSAGE;
+import static org.jdiameter.api.Avp.FIRMWARE_REVISION;
+import static org.jdiameter.api.Avp.HOST_IP_ADDRESS;
+import static org.jdiameter.api.Avp.ORIGIN_HOST;
+import static org.jdiameter.api.Avp.ORIGIN_REALM;
+import static org.jdiameter.api.Avp.ORIGIN_STATE_ID;
+import static org.jdiameter.api.Avp.PRODUCT_NAME;
+import static org.jdiameter.api.Avp.RESULT_CODE;
+import static org.jdiameter.api.Avp.SUPPORTED_VENDOR_ID;
+import static org.jdiameter.api.Avp.VENDOR_ID;
+import static org.jdiameter.api.Avp.VENDOR_SPECIFIC_APPLICATION_ID;
+import static org.jdiameter.api.Message.CAPABILITIES_EXCHANGE_REQUEST;
+import static org.jdiameter.api.Message.DEVICE_WATCHDOG_REQUEST;
+import static org.jdiameter.api.Message.DISCONNECT_PEER_REQUEST;
+import static org.jdiameter.client.api.fsm.EventTypes.CEA_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.CER_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.CONNECT_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.DISCONNECT_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.DPA_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.DPR_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.DWA_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.DWR_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.INTERNAL_ERROR;
+import static org.jdiameter.client.api.fsm.EventTypes.RECEIVE_MSG_EVENT;
+import static org.jdiameter.client.api.fsm.EventTypes.STOP_EVENT;
+import static org.jdiameter.client.impl.helpers.Parameters.PeerRating;
+import static org.jdiameter.client.impl.helpers.Parameters.SecurityRef;
+import static org.jdiameter.client.impl.helpers.Parameters.UseUriAsFqdn;
 
 /**
  * Client Peer implementation
@@ -269,7 +270,11 @@ public class PeerImpl extends AbstractPeer implements IPeer {
       IConnection connection, final ISessionDatasource sessionDataSource) throws InternalException, TransportException {
     super(remotePeer, statisticFactory);
     this.table = table;
-    this.rating = rating;
+    if( peerConfig != null ) {
+      this.rating = peerConfig.getIntValue(PeerRating.ordinal(), 0);
+    } else {
+      this.rating = rating;
+    }
     this.router = table.router;
     this.metaData = metaData;
     // XXX: FT/HA // this.slc = table.getSessionReqListeners();
