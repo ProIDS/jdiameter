@@ -411,7 +411,7 @@ public class RouterImpl implements IRouter {
         throw new RouteException("Unable to find context by route information [" + destRealm + " ," + destHost + "]");
       }
       
-      List<IPeer> availablePeers = getAvailablePeers(destRealm, peers, manager);
+      List<IPeer> availablePeers = getAvailablePeers(destRealm, peers, manager, message);
       
       if(message.isRetransmissionSupervised())
         message.setNumberOfRetransAllowed(availablePeers.size()-1);
@@ -437,7 +437,7 @@ public class RouterImpl implements IRouter {
     }
   }
   
-  protected List<IPeer> getAvailablePeers(String destRealm, String[] peers, IPeerTable manager) {
+  protected List<IPeer> getAvailablePeers(String destRealm, String[] peers, IPeerTable manager, IMessage message) {
     return getPeers(destRealm, peers, manager, PeerState.OKAY);
   }
   
