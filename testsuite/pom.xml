@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.mobicents.diameter</groupId>
 		<artifactId>diameter-parent</artifactId>
-		<version>proids-ocp-1.7.3-SNAPSHOT</version>
+		<version>proids-ocp-1.7.3</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
