@@ -91,6 +91,7 @@ public abstract class AppRoutingAwareSessionImpl extends AppSessionImpl {
     try {
       IPeer peer = null;
       if(reqEvent.getMessage() instanceof IMessage) {
+        sessionPersistenceStorage.clearUnanswerablePeers(this.getSessionId());
         peer = ((IMessage) reqEvent.getMessage()).getPeer();
       } else {
         logger.warn("Cannot retrieve message detailed context for Session-Id/activityId [{}]", this.getSessionId());

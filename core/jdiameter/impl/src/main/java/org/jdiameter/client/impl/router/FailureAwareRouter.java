@@ -76,7 +76,15 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
 	@Override
 	protected List<IPeer> getAvailablePeers(String destRealm, String[] peers, IPeerTable manager, IMessage message) {
 	  List<IPeer> selectedPeers = super.getAvailablePeers(destRealm, peers, manager, message);
-	  
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("All available peers: {}", selectedPeers);
+		}
+		selectedPeers = narrowToAnswerablePeers(selectedPeers, message.getSessionId());
+		if (logger.isDebugEnabled()) {
+			logger.debug("All answerable peers: {}", selectedPeers);
+		}
+
 	  int maxRating = findMaximumRating(selectedPeers);
 	  if(maxRating >= 0 && maxRating != lastSelectedRating) {
 	    lastSelectedRating = maxRating;
@@ -84,9 +92,28 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
 	  }
 
 	  selectedPeers = narrowToSelectablePeersSubset(selectedPeers, maxRating, message);
-	  logger.debug("Final subset of selectable peers (max rating [{}]): {}", maxRating, selectedPeers);
-    
+		if (logger.isDebugEnabled()) {
+			logger.debug("Final subset of selectable peers (max rating [{}]): {}", maxRating, selectedPeers);
+		}
+
 	  return selectedPeers;
+  }
+
+  private List<IPeer> narrowToAnswerablePeers(List<IPeer> availablePeers, String sessionId) {
+	  List<String> unAnswerablePeers = sessionDatasource.getUnanswerablePeers(sessionId);
+
+	  if(unAnswerablePeers != null) {
+		  for (String peerFqdn : unAnswerablePeers) {
+			  for (IPeer peer : availablePeers) {
+				  if (peer.getUri().getFQDN().equals(peerFqdn)) {
+					  availablePeers.remove(peer);
+					  break;
+				  }
+			  }
+		  }
+	  }
+
+	  return availablePeers;
   }
 	
 	/**
@@ -98,16 +125,25 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
 	@Override
   public IPeer selectPeer(List<IPeer> availablePeers, IMessage message) {
 	  IPeer peer = null;
-
-	  logger.debug(super.dumpRoundRobinContext());
-	  peer = super.selectPeer(availablePeers);
+		if(logger.isDebugEnabled()) {
+			logger.debug(super.dumpRoundRobinContext());
+		}
+		peer = super.selectPeer(availablePeers);
 	  
 	  if(isSessionPersistentRoutingEnabled()) {
         String sessionAssignedPeer = sessionDatasource.getSessionPeer(message.getSessionId());
 	    if(sessionAssignedPeer != null && !peer.getUri().getFQDN().equals(sessionAssignedPeer)) {
-	      logger.debug("Peer reselection took place from [{}] to [{}] on session [{}]", new Object[] { sessionAssignedPeer, peer.getUri().getFQDN(), message.getSessionId() });
-	      sessionDatasource.setSessionPeer(message.getSessionId(), peer);
-	    }
+				if(logger.isDebugEnabled()) {
+					logger.debug("Peer reselection took place from [{}] to [{}] on session [{}]", new Object[]{sessionAssignedPeer, peer.getUri().getFQDN(), message.getSessionId()});
+				}
+				sessionDatasource.setSessionPeer(message.getSessionId(), peer);
+	    } else if(sessionAssignedPeer == null) {
+	    	sessionDatasource.setSessionPeer(message.getSessionId(), peer);
+	    	if(logger.isDebugEnabled()) {
+					logger.debug("Peer [{}] selected and assigned to session [{}]", new Object[] {peer.getUri().getFQDN(), message.getSessionId() });
+				}
+			}
+
 	  }
 	  
 	  return peer;

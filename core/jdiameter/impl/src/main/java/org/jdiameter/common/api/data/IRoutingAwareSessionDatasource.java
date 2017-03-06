@@ -25,6 +25,8 @@ package org.jdiameter.common.api.data;
 import org.jdiameter.api.SessionPersistenceStorage;
 import org.jdiameter.client.api.controller.IPeer;
 
+import java.util.List;
+
 /**
  * Extends basic session storage with capabilities of CRUD operations
  * for session persistence records which bind sessions with peers that
@@ -55,4 +57,17 @@ public interface IRoutingAwareSessionDatasource extends ISessionDatasource, Sess
    * @return peer name that has just been unbound
    */
   public String removeSessionPeer(String sessionId);
+
+  /**
+   *
+   * @param sessionId session identifier used as mapping key in session storage
+   */
+  public void clearUnanswerablePeers(String sessionId);
+
+  /**
+   *
+   * @param sessionId session identifier used as mapping key in session storage
+   * @return list of peers that did not answer for request within Tx timer value period
+   */
+  public List<String> getUnanswerablePeers(String sessionId);
 }
