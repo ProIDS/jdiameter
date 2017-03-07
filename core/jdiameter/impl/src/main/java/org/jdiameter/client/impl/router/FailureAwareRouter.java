@@ -129,7 +129,10 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
 			logger.debug(super.dumpRoundRobinContext());
 		}
 		peer = super.selectPeer(availablePeers);
-	  
+
+		if(peer == null) {
+			return null;
+		}
 	  if(isSessionPersistentRoutingEnabled()) {
         String sessionAssignedPeer = sessionDatasource.getSessionPeer(message.getSessionId());
 	    if(sessionAssignedPeer != null && !peer.getUri().getFQDN().equals(sessionAssignedPeer)) {

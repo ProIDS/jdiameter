@@ -1247,6 +1247,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   }
   
   protected void handlePeerUnavailability(Message msg, NoMorePeersAvailableException nmpae) {
+    logger.warn("No more peers available for sending diameter message: ", nmpae);
     deliverPeerUnavailabilityError(msg, nmpae);
     resetMessageStatus(msg);
     setState(ClientRoSessionState.IDLE, true);
