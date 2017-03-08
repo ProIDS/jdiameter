@@ -1247,7 +1247,10 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   }
   
   protected void handlePeerUnavailability(Message msg, NoMorePeersAvailableException nmpae) {
-    logger.warn("No more peers available for sending diameter message: ", nmpae);
+    logger.warn("No more peers available for sending diameter message: ", nmpae.getMessage());
+    if(logger.isDebugEnabled()) {
+      logger.debug("nmpa exception: {}", nmpae);
+    }
     deliverPeerUnavailabilityError(msg, nmpae);
     resetMessageStatus(msg);
     setState(ClientRoSessionState.IDLE, true);
@@ -1255,8 +1258,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
 
   protected void handleRetransmission(Type eventType, IMessage msg, boolean tFlagSetting) {
     msg.setReTransmitted(tFlagSetting);
-    if(this.sessionData.getRetransmissionTimerId() == null)
+    if(this.sessionData.getRetransmissionTimerId() == null) {
       startFailoverStopTimer();
+    }
     
     if(isSessionPersistenceEnabled()) {
       String oldPeer = flushSessionPersistenceContext();
@@ -1284,6 +1288,8 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   
   protected void handleRetransmissionDueToError(Type eventType, Message msg) {
     IMessage imsg = (IMessage) msg;
+
+    logger.warn("Message will be retransmitted due to error response [{}] ", msg);
 
     if(!imsg.isRetransmissionAllowed()) {
       NoMorePeersAvailableException cause = new NoMorePeersAvailableException("No more peers available for retransmission");

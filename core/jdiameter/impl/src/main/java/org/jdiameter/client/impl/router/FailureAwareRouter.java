@@ -84,6 +84,10 @@ public class FailureAwareRouter extends WeightedRoundRobinRouter {
 		if (logger.isDebugEnabled()) {
 			logger.debug("All answerable peers: {}", selectedPeers);
 		}
+		
+		if(message.isRetransmissionSupervised()) {
+			message.setNumberOfRetransAllowed(selectedPeers.size() - 1);
+		}
 
 	  int maxRating = findMaximumRating(selectedPeers);
 	  if(maxRating >= 0 && maxRating != lastSelectedRating) {
