@@ -22,13 +22,6 @@
 
 package org.jdiameter.client.impl.parser;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.jdiameter.api.Answer;
 import org.jdiameter.api.ApplicationId;
 import org.jdiameter.api.Avp;
@@ -42,12 +35,20 @@ import org.jdiameter.client.impl.router.RouterImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Represents a Diameter message.
  * 
  * @author erick.svenson@yahoo.com
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
+ * @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel (ProIDS sp. z o.o.)</a>
  */
 public class MessageImpl implements IMessage {
 
@@ -81,7 +82,6 @@ public class MessageImpl implements IMessage {
   /**
    * Create empty message
    * 
-   * @param parser
    * @param commandCode
    * @param appId
    */
@@ -96,7 +96,6 @@ public class MessageImpl implements IMessage {
   /**
    * Create empty message
    * 
-   * @param parser
    * @param commandCode
    * @param applicationId
    * @param flags
@@ -245,7 +244,20 @@ public class MessageImpl implements IMessage {
   public boolean isRetransmissionAllowed() {
     return this.numberOfRetransAllowed > 0;
   }
-  
+
+  public int getCcSessionFailover() {
+    try {
+      Avp avpCcSessionFailover = avpSet.getAvp(Avp.CC_SESSION_FAILOVER);
+      if(avpCcSessionFailover != null) {
+        return avpCcSessionFailover.getInteger32();
+      }
+    }
+    catch (AvpDataException ade) {
+      logger.error("Failed to fetch CC-Session-Failover", ade);
+    }
+    return DEFAULT_SESSION_FAILOVER_VALUE;
+  }
+
   public void setNumberOfRetransAllowed(int arg) {
     if(this.numberOfRetransAllowed < 0)
       this.numberOfRetransAllowed = arg;

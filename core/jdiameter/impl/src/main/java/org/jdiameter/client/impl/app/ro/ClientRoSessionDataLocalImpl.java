@@ -22,16 +22,17 @@
 
 package org.jdiameter.client.impl.app.ro;
 
-import java.io.Serializable;
-
 import org.jdiameter.api.Request;
 import org.jdiameter.common.api.app.AppSessionDataLocalImpl;
 import org.jdiameter.common.api.app.ro.ClientRoSessionState;
+
+import java.io.Serializable;
 
 /**
  *
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
+ * @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel (ProIDS sp. z o.o.)</a>
  */
 public class ClientRoSessionDataLocalImpl extends AppSessionDataLocalImpl implements IClientRoSessionData {
 
@@ -50,6 +51,7 @@ public class ClientRoSessionDataLocalImpl extends AppSessionDataLocalImpl implem
 
   protected int gatheredCCFH = NON_INITIALIZED;
   protected int gatheredDDFH = NON_INITIALIZED;
+  protected int gatheredCCSF = NON_INITIALIZED;
 
   /**
    * 
@@ -135,6 +137,16 @@ public class ClientRoSessionDataLocalImpl extends AppSessionDataLocalImpl implem
 
   public void setGatheredDDFH(int gatheredDDFH) {
     this.gatheredDDFH = gatheredDDFH;
+  }
+
+  @Override
+  public int getGatheredCCSF() {
+    return this.gatheredCCSF;
+  }
+
+  @Override
+  public void setGatheredCCSF(int gatheredCCSF) {
+    this.gatheredCCSF = gatheredCCSF;
   }
 
 }

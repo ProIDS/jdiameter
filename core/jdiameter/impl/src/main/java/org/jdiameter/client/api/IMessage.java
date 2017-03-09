@@ -22,11 +22,11 @@
 
 package org.jdiameter.client.api;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.jdiameter.api.ApplicationId;
 import org.jdiameter.client.api.controller.IPeer;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This interface extends basic message interface
@@ -37,6 +37,7 @@ import org.jdiameter.client.api.controller.IPeer;
  * @author erick.svenson@yahoo.com
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
+ * @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel (ProIDS sp. z o.o.)</a>
  */
 public interface IMessage extends IRequest, IAnswer {
 
@@ -59,6 +60,11 @@ public interface IMessage extends IRequest, IAnswer {
    *  Stack received answer to this message
    */
   int STATE_ANSWERED = 3;
+
+  /**
+   *  Default CC-Session-Failover AVP value - NOT_SUPPORTED(0) according to RFC 4006.
+   */
+  int DEFAULT_SESSION_FAILOVER_VALUE = 0;
 
   /**
    * Return state of message
@@ -168,7 +174,12 @@ public interface IMessage extends IRequest, IAnswer {
    * @return false if no more retransmissions are allowed
    */
   public boolean isRetransmissionAllowed();
-  
+
+  /**
+   * @return value of CC-Session-Failover AVP.
+   */
+  public int getCcSessionFailover();
+
   /**
    * Sets the number of allowed retransmissions for this message that can be performed
    * in case of failure detection.

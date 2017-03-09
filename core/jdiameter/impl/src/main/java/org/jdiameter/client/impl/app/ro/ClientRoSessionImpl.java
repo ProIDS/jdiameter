@@ -22,19 +22,6 @@
 
 package org.jdiameter.client.impl.app.ro;
 
-import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionRequiredResCodes;
-import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionTimeOut;
-import static org.jdiameter.client.impl.helpers.Parameters.TxTimeOut;
-
-import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import org.jdiameter.api.Answer;
 import org.jdiameter.api.AvpDataException;
 import org.jdiameter.api.EventListener;
@@ -76,11 +63,25 @@ import org.jdiameter.common.impl.app.ro.AppRoSessionImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionRequiredResCodes;
+import static org.jdiameter.client.impl.helpers.Parameters.RetransmissionTimeOut;
+import static org.jdiameter.client.impl.helpers.Parameters.TxTimeOut;
+
 /**
  * Client Credit-Control Application session implementation
  * 
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
+ * @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel (ProIDS sp. z o.o.)</a>
  */
 public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSession, NetworkReqListener, EventListener<Request, Answer> {
 
@@ -186,6 +187,11 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   protected int getLocalDDFH() {
     return sessionData.getGatheredDDFH() >= 0 ? sessionData.getGatheredDDFH() : context.getDefaultDDFHValue();
   }
+
+  protected boolean isSessionFailoverSupported() {
+    return sessionData.getGatheredCCSF() <= 0 ? false : true;
+  }
+
 
   public void sendCreditControlRequest(RoCreditControlRequest request) throws InternalException, IllegalDiameterStateException, RouteException, OverloadException {
     try {
@@ -354,6 +360,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
         AppAnswerEvent answer = (AppAnswerEvent) localEvent.getAnswer();
         switch (eventType) {
         case RECEIVED_INITIAL_ANSWER:
+          sessionData.setGatheredCCSF(((IMessage)localEvent.getAnswer().getMessage()).getCcSessionFailover());
           long resultCode = answer.getResultCodeAvp().getUnsigned32();
           if (isSuccess(resultCode)) {
             // Current State: PENDING_I
@@ -373,14 +380,15 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
             handleRetransmissionDueToError(eventType, localEvent.getRequest().getMessage());
             break;
           }
-          else if (isProvisional(resultCode) || isFailure(resultCode))
+          else if (isProvisional(resultCode) || isFailure(resultCode)) {
             handleFailureMessage((RoCreditControlAnswer) answer, (RoCreditControlRequest) localEvent.getRequest(), eventType);
+          }
 
           deliverRoAnswer((RoCreditControlRequest) localEvent.getRequest(), (RoCreditControlAnswer) localEvent.getAnswer());
           break;
         case Tx_TIMER_FIRED:
           if(isRetransmissionRequired())
-            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest().getMessage());
+            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest());
           else
             handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           break;
@@ -496,6 +504,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
         answer = (AppAnswerEvent) localEvent.getAnswer();
         switch (eventType) {
         case RECEIVED_UPDATE_ANSWER:
+          sessionData.setGatheredCCSF(((IMessage)localEvent.getAnswer().getMessage()).getCcSessionFailover());
           long resultCode = answer.getResultCodeAvp().getUnsigned32();
           if (isSuccess(resultCode)) {
             // Current State: PENDING_U
@@ -516,7 +525,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           break;
         case Tx_TIMER_FIRED:
           if(isRetransmissionRequired())
-            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest().getMessage());
+            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest());
           else
             handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           break;
@@ -584,6 +593,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
 
           //FIXME: Alex broke this, setting back "true" ? 
           //setState(ClientRoSessionState.IDLE, false);
+          sessionData.setGatheredCCSF(((IMessage)localEvent.getAnswer().getMessage()).getCcSessionFailover());
           long resultCode = ((AppAnswerEvent) localEvent.getAnswer()).getResultCodeAvp().getUnsigned32();
           if(retrRequiredErrorCodes.contains(resultCode)) {
             handleRetransmissionDueToError(eventType, localEvent.getRequest().getMessage());
@@ -595,7 +605,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           break;
         case Tx_TIMER_FIRED:
           if(isRetransmissionRequired())
-            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest().getMessage());
+            handleRetransmissionDueToTimeout(eventType, localEvent.getRequest());
           else
             handleRetransmissionFailure((RoCreditControlRequest) localEvent.getRequest());
           break;
@@ -785,7 +795,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
 
   protected void handleSendFailure(Exception e, Event.Type eventType, Message request) throws Exception {
     logger.warn("Failed to send message", e);
-    logger.debug("Failed to send message, type: {} message: {}, failure: {}", new Object[]{eventType, request, e != null ? e.getLocalizedMessage() : ""});
+    if(logger.isDebugEnabled()) {
+      logger.debug("Failed to send message, type: {} message: {}, failure: {}", new Object[]{eventType, request, e != null ? e.getLocalizedMessage() : ""});
+    }
     try {
       ClientRoSessionState state = sessionData.getClientRoSessionState();
       // Event Based ----------------------------------------------------------
@@ -1288,22 +1300,36 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
   
   protected void handleRetransmissionDueToError(Type eventType, Message msg) {
     IMessage imsg = (IMessage) msg;
-
     logger.warn("Message will be retransmitted due to error response [{}] ", msg);
 
-    if(!imsg.isRetransmissionAllowed()) {
-      NoMorePeersAvailableException cause = new NoMorePeersAvailableException("No more peers available for retransmission");
-      cause.setSessionPersistentRoutingEnabled(router.isSessionAware());
-      handlePeerUnavailability(msg, cause);
-      return;
+    try {
+      if(imsg.isRetransmissionAllowed() ) {
+        if(isSessionFailoverSupported()) {
+          handleRetransmission(eventType, imsg, false);
+          imsg.decrementNumberOfRetransAllowed();
+        } else {
+          handleSendFailure(new Exception("Failover unsupported for session ID: " + sessionData.getSessionId()), eventType, msg);
+        }
+      } else {
+        NoMorePeersAvailableException cause = new NoMorePeersAvailableException("No more peers available for retransmission");
+        cause.setSessionPersistentRoutingEnabled(router.isSessionAware());
+        handlePeerUnavailability(msg, cause);
+      }
+    } catch (Exception e) {
+      logger.error("Failure handling send failure error in handleRetransmissionDueToError", e);
     }
-
-    handleRetransmission(eventType, imsg, false);
-    imsg.decrementNumberOfRetransAllowed();
   }
   
-  protected void handleRetransmissionDueToTimeout(Type eventType, Message msg) {
-    handleRetransmission(eventType, (IMessage) msg, true);
+  protected void handleRetransmissionDueToTimeout(Type eventType, AppEvent event) throws InternalException {
+    if(isSessionFailoverSupported()) {
+      handleRetransmission(eventType, (IMessage) event.getMessage(), true);
+    } else {
+      logger.warn("Failed to send message. Failover unsupported for session ID: {}", sessionData.getSessionId());
+      if(logger.isDebugEnabled()) {
+        logger.debug("Failed to send message, type: {} message: {}, failure: Failover unsupported for session ID: {}", new Object[]{eventType, event.getMessage(), sessionData.getSessionId()});
+      }
+      handleRetransmissionFailure((RoCreditControlRequest) event);
+    }
   }
   
   /**

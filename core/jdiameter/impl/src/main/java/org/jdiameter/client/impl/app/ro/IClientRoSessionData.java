@@ -22,16 +22,17 @@
 
 package org.jdiameter.client.impl.app.ro;
 
-import java.io.Serializable;
-
 import org.jdiameter.api.Request;
 import org.jdiameter.common.api.app.ro.ClientRoSessionState;
 import org.jdiameter.common.api.app.ro.IRoSessionData;
+
+import java.io.Serializable;
 
 /**
  * 
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
+*  @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel (ProIDS sp. z o.o.)</a>
  */
 public interface IClientRoSessionData extends IRoSessionData {
 
@@ -74,4 +75,9 @@ public interface IClientRoSessionData extends IRoSessionData {
   public int getGatheredDDFH();
 
   public void setGatheredDDFH(int gatheredDDFH);
+
+  public int getGatheredCCSF();
+
+  public void setGatheredCCSF(int gatheredCCSF);
+
 }

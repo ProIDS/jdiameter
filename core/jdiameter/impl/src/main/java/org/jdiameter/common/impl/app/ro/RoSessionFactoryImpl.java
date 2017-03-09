@@ -19,8 +19,6 @@
 
 package org.jdiameter.common.impl.app.ro;
 
-import java.util.concurrent.ScheduledFuture;
-
 import org.jdiameter.api.Answer;
 import org.jdiameter.api.ApplicationId;
 import org.jdiameter.api.InternalException;
@@ -41,6 +39,7 @@ import org.jdiameter.api.ro.ServerRoSession;
 import org.jdiameter.api.ro.ServerRoSessionListener;
 import org.jdiameter.api.ro.events.RoCreditControlAnswer;
 import org.jdiameter.api.ro.events.RoCreditControlRequest;
+import org.jdiameter.client.api.IMessage;
 import org.jdiameter.client.api.ISessionFactory;
 import org.jdiameter.client.impl.app.ro.ClientRoSessionImpl;
 import org.jdiameter.client.impl.app.ro.IClientRoSessionData;
@@ -58,17 +57,21 @@ import org.jdiameter.server.impl.app.ro.ServerRoSessionImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ScheduledFuture;
+
 /**
  * Default Diameter Ro Session Factory implementation
  * 
  * @author <a href="mailto:brainslog@gmail.com"> Alexandre Mendonca </a>
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
+ * @author <a href="mailto:grzegorz.figiel@pro-ids.com"> Grzegorz Figiel (ProIDS sp. z o.o.)</a>
  */
 public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionListener, ServerRoSessionListener, StateChangeListener<AppSession>, IRoMessageFactory, IServerRoSessionContext, IClientRoSessionContext {
 
   // Message timeout value (in milliseconds)
   protected int defaultDirectDebitingFailureHandling = 0;
   protected int defaultCreditControlFailureHandling = 0;
+  protected int defaultCreditControlSessionFailover = IMessage.DEFAULT_SESSION_FAILOVER_VALUE;
 
   // its seconds
   protected long defaultValidityTime = 60;
@@ -435,6 +438,10 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
 
   public int getDefaultCCFHValue() {
     return defaultCreditControlFailureHandling;
+  }
+
+  public int getDefaultCCSFValue() {
+    return defaultCreditControlSessionFailover;
   }
 
   public int getDefaultDDFHValue() {
