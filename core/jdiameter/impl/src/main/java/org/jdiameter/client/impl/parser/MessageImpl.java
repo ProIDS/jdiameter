@@ -255,7 +255,7 @@ public class MessageImpl implements IMessage {
     catch (AvpDataException ade) {
       logger.error("Failed to fetch CC-Session-Failover", ade);
     }
-    return DEFAULT_SESSION_FAILOVER_VALUE;
+    return SESSION_FAILOVER_NOT_SUPPORTED_VALUE;
   }
 
   public void setNumberOfRetransAllowed(int arg) {
