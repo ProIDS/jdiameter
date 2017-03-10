@@ -64,7 +64,12 @@ public interface IMessage extends IRequest, IAnswer {
   /**
    *  Default CC-Session-Failover AVP value - NOT_SUPPORTED(0) according to RFC 4006.
    */
-  int DEFAULT_SESSION_FAILOVER_VALUE = 0;
+  int SESSION_FAILOVER_NOT_SUPPORTED_VALUE = 0;
+
+  /**
+   *  CC-Session-Failover AVP value - SUPPORTED(1) according to RFC 4006.
+   */
+  int SESSION_FAILOVER_SUPPORTED_VALUE = 1;
 
   /**
    * Return state of message

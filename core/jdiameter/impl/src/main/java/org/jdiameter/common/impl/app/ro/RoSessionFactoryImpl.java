@@ -71,7 +71,7 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
   // Message timeout value (in milliseconds)
   protected int defaultDirectDebitingFailureHandling = 0;
   protected int defaultCreditControlFailureHandling = 0;
-  protected int defaultCreditControlSessionFailover = IMessage.DEFAULT_SESSION_FAILOVER_VALUE;
+  protected int defaultCreditControlSessionFailover = IMessage.SESSION_FAILOVER_NOT_SUPPORTED_VALUE;
 
   // its seconds
   protected long defaultValidityTime = 60;

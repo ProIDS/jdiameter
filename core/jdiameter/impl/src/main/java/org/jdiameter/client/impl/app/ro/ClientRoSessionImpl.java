@@ -339,6 +339,9 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           // New State: PENDING_I
           startTx(localEvent.getRequest().getMessage());
           setState(ClientRoSessionState.PENDING_INITIAL);
+          // RFC 4006: For new credit-control sessions, failover to an alternative
+          // credit-control server SHOULD be performed if possible.
+          sessionData.setGatheredCCSF(IMessage.SESSION_FAILOVER_SUPPORTED_VALUE);
           try {
             dispatchEvent(localEvent.getRequest());
           }
