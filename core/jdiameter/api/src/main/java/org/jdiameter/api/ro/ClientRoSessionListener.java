@@ -84,7 +84,20 @@ public interface ClientRoSessionListener {
 
   /**
    * Notifies this ClientRoSessionListener that message delivery timeout expired and there was no response from
-   * any of remote peers in spite of numerous retransmissions and performing failover algorithm.
+   * one of remote peers.
+   *
+   * @param session parent application session (FSM)
+   * @param msg request object
+   * @throws InternalException The InternalException signals that internal error has occurred.
+   * @throws IllegalDiameterStateException The IllegalStateException signals that session has incorrect state (invalid).
+   * @throws RouteException The NoRouteException signals that no route exist for a given realm.
+   * @throws OverloadException The OverloadException signals that destination host is overloaded.
+   */
+  void doRequestTxTimeout(ClientRoSession session, Message msg, Peer peer) throws InternalException, IllegalDiameterStateException, RouteException, OverloadException;
+
+  /**
+   * Notifies this ClientRoSessionListener that message delivery timeout expired and there was no response from
+   * any of remote peers in spite of numerous retransmissions and performing failover algorithm if enabled.
    * 
    * @param session parent application session (FSM)
    * @param msg request object

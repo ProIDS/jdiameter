@@ -352,6 +352,10 @@ public class RoSessionFactoryImpl implements IRoSessionFactory, ClientRoSessionL
   public void doOtherEvent(AppSession session, AppRequestEvent request, AppAnswerEvent answer) throws InternalException {
 
   }
+
+  public void doRequestTxTimeout(ClientRoSession session, Message msg, Peer peer) throws InternalException {
+
+  }
   
   public void doRequestTimeout(ClientRoSession session, Message msg, Peer peer) throws InternalException {
     

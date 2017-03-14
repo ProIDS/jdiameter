@@ -281,6 +281,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           }
           break;
         case Tx_TIMER_FIRED:
+          deliverRequestTxTimeout(localEvent.getRequest().getMessage());
           handleTxExpires(localEvent.getRequest().getMessage());
           break;
         default:
@@ -390,6 +391,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           deliverRoAnswer((RoCreditControlRequest) localEvent.getRequest(), (RoCreditControlAnswer) localEvent.getAnswer());
           break;
         case Tx_TIMER_FIRED:
+          deliverRequestTxTimeout(localEvent.getRequest().getMessage());
           if(isRetransmissionRequired())
             handleRetransmissionDueToTimeout(eventType, localEvent.getRequest());
           else
@@ -527,6 +529,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           deliverRoAnswer((RoCreditControlRequest) localEvent.getRequest(), (RoCreditControlAnswer) localEvent.getAnswer());
           break;
         case Tx_TIMER_FIRED:
+          deliverRequestTxTimeout(localEvent.getRequest().getMessage());
           if(isRetransmissionRequired())
             handleRetransmissionDueToTimeout(eventType, localEvent.getRequest());
           else
@@ -607,6 +610,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
           setState(ClientRoSessionState.IDLE, true);
           break;
         case Tx_TIMER_FIRED:
+          deliverRequestTxTimeout(localEvent.getRequest().getMessage());
           if(isRetransmissionRequired())
             handleRetransmissionDueToTimeout(eventType, localEvent.getRequest());
           else
@@ -1396,6 +1400,18 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
       logger.warn("Failure delivering RAR", e);
     }
   }
+
+  protected void deliverRequestTxTimeout(Message msg) {
+    logger.debug("Propagating Tx timeout event to listener [{}] on {} session", listener, isValid()?"valid":"invalid");
+    try {
+      if(isValid()) {
+        listener.doRequestTxTimeout(this, msg, ((IMessage) msg).getPeer());
+      }
+    }
+    catch (Exception e) {
+      logger.warn("Failure delivering request tx timeout", e);
+    }
+  }
   
   protected void deliverRequestTimeout(Message msg) {
     logger.debug("Propagating timeout event to listener [{}] on {} session", listener, isValid()?"valid":"invalid");
@@ -1543,7 +1559,7 @@ public class ClientRoSessionImpl extends AppRoSessionImpl implements ClientRoSes
     public void run() {
       try {
         sendAndStateLock.lock();
-        logger.debug("Fired failover stop timer");
+        logger.debug("Fired failover stop timer (Retransmission timout occured)");
         stopTx(false);
         sessionData.setRetransmissionTimerId(null);
         handleEvent(new Event(Event.Type.RETRANSMISSION_TIMER_FIRED, factory.createCreditControlRequest(request), null));
